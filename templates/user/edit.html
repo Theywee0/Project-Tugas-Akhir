@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% block title %}Edit User{% endblock %}
+{% block page_title %}Edit User{% endblock %}
+{% block topbar_icon %}bi bi-pencil-square{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <p class="subtitle mb-0">Perbarui data akun pengguna.</p>
+    <a href="{{ url_for('user.list_user') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Kembali</a>
+</div>
+<div class="app-card" style="max-width:640px;">
+    <form method="POST" autocomplete="off">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">Nama Lengkap <span class="req">*</span></label>
+                <input type="text" name="Nama" class="form-control" value="{{ user[1] }}" required autocomplete="off">
+            </div>
+              <div class="col-md-6">
+                <label class="form-label">Role <span class="req">*</span></label>
+                {% if session['role'] == 'kepala_operasional_gs' %}
+                <input type="text" class="form-control" value="Driver" readonly style="background-color: #e9ecef; color: #6c757d;">
+                <input type="hidden" name="Role" value="driver">
+                {% elif user[3] == 'admin' %}
+                <input type="text" class="form-control" value="Admin" readonly style="background-color: #e9ecef; color: #6c757d;">
+                <input type="hidden" name="Role" value="admin">
+                <small class="text-muted"><i class="bi bi-info-circle me-1"></i>Role khusus Admin tidak dapat diubah ke role lain</small>
+                {% else %}
+                <select name="Role" class="form-select" required>
+                    <option value="driver" {% if user[3]=='driver' %}selected{% endif %}>Driver</option>
+                    <option value="kepala_operasional_gs" {% if user[3]=='kepala_operasional_gs' %}selected{% endif %}>Kepala Operasional GS</option>
+                </select>
+                {% endif %}
+              </div>
+            <div class="col-md-6">
+                <label class="form-label">Username <span class="req">*</span></label>
+                <input type="text" name="Username" class="form-control" value="{{ user[2] }}" required autocomplete="off">
+            </div>
+            <div class="col-md-6">
+                {% if session['role'] != 'kepala_operasional_gs' %}
+                <label class="form-label">Password Baru</label>
+                <div class="input-group">
+                    <input type="password" name="Password" id="passUser" class="form-control border-end-0" placeholder="Kosongkan jika tidak diubah" autocomplete="new-password">
+                    <span class="input-group-text bg-white border-start-0" style="cursor: pointer;" onclick="togglePass('passUser')">
+                        <i class="bi bi-eye text-muted"></i>
+                    </span>
+                </div>
+                <div id="passRequirements" class="mt-2" style="font-size: 0.7rem; display: none;">
+                    <div id="req-len" class="text-danger mb-1"><i class="bi bi-x-circle me-1"></i>Minimal 8 Karakter</div>
+                    <div id="req-cap" class="text-danger mb-1"><i class="bi bi-x-circle me-1"></i>Minimal 1 Huruf Kapital</div>
+                    <div id="req-sym" class="text-danger"><i class="bi bi-x-circle me-1"></i>Minimal 1 Simbol (@, #, $, dll)</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="mt-4">
+            <button type="submit" id="btnSimpan" class="btn btn-success px-4"><i class="bi bi-check-circle me-2"></i>Perbarui</button>
+            <a href="{{ url_for('user.list_user') }}" class="btn btn-outline-secondary px-4">Batal</a>
+        </div>
+    </form>
+</div>
+
+<script>
+function togglePass(id) {
+    const input = document.getElementById(id);
+    const btn = input.nextElementSibling.querySelector('i');
+    if (input.type === "password") {
+        input.type = "text";
+        btn.classList.remove('bi-eye');
+        btn.classList.add('bi-eye-slash');
+    } else {
+        input.type = "password";
+        btn.classList.remove('bi-eye-slash');
+        btn.classList.add('bi-eye');
+    }
+}
+
+const passInput = document.getElementById('passUser');
+if (passInput) {
+    passInput.addEventListener('input', function() {
+        const val = this.value;
+        const reqDiv = document.getElementById('passRequirements');
+        const btnSimpan = document.getElementById('btnSimpan');
+        
+        if (val.length === 0) {
+            reqDiv.style.display = 'none';
+            btnSimpan.disabled = false; // Boleh submit tanpa ganti password
+            return;
+        }
+        
+        reqDiv.style.display = 'block';
+        
+        const isLen = val.length >= 8;
+        const isCap = /[A-Z]/.test(val);
+        const isSym = /[!@#$%^&*(),.?":{}|<>]/.test(val);
+        
+        const updateReq = (id, valid, text) => {
+            const el = document.getElementById(id);
+            if (valid) {
+                el.className = 'text-success mb-1';
+                el.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i>' + text;
+            } else {
+                el.className = 'text-danger mb-1';
+                el.innerHTML = '<i class="bi bi-x-circle me-1"></i>' + text;
+            }
+        };
+        
+        updateReq('req-len', isLen, 'Minimal 8 Karakter');
+        updateReq('req-cap', isCap, 'Minimal 1 Huruf Kapital');
+        updateReq('req-sym', isSym, 'Minimal 1 Simbol (@, #, $, dll)');
+        
+        btnSimpan.disabled = !(isLen && isCap && isSym);
+    });
+}
+</script>
+{% endblock %}

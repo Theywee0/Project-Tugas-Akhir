@@ -1,0 +1,320 @@
+{% extends 'base.html' %}
+{% block title %}Laporan Inspeksi{% endblock %}
+{% block page_title %}Laporan Inspeksi{% endblock %}
+{% block topbar_icon %}bi bi-clipboard-check-fill{% endblock %}
+{% block head_extra %}
+<script src="{{ url_for('static', filename='vendor/chart/chart.umd.min.js') }}"></script>
+{% endblock %}
+
+{% block content %}
+<!-- STATISTIK RINGKASAN (4 Kartu Horizontal) -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="label text-muted">Total Inspeksi</div>
+            <div class="value">{{ "{:,}".format(total[0]|int) if total else 0 }} <small class="fs-6 text-muted fw-normal">kali</small></div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="label text-muted">Kendaraan Diinspeksi</div>
+            <div class="value">{{ "{:,}".format(total[1]|int) if total else 0 }} <small class="fs-6 text-muted fw-normal">unit</small></div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="label text-muted">Total Temuan Tidak Normal</div>
+            <div class="value text-danger">{{ "{:,}".format(total_tn|int) }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="label text-muted">Kondisi Tidak Normal</div>
+            <div class="value">{{ pct_tn }} <small class="fs-6 text-muted fw-normal">%</small></div>
+        </div>
+    </div>
+</div>
+
+<!-- FILTER BAR -->
+<div class="d-flex flex-wrap align-items-center gap-2 mb-4">
+    <form method="GET" class="d-flex align-items-center gap-2 m-0">
+        <select name="bulan" class="form-select form-select-sm" style="width:130px;">
+            <option value="">Semua Bulan</option>
+            {% for i, bln in [(1,'Januari'),(2,'Februari'),(3,'Maret'),(4,'April'),(5,'Mei'),(6,'Juni'),(7,'Juli'),(8,'Agustus'),(9,'September'),(10,'Oktober'),(11,'November'),(12,'Desember')] %}
+            <option value="{{ i }}" {% if bulan==i|string %}selected{% endif %}>{{ bln }}</option>
+            {% endfor %}
+        </select>
+        <select name="tahun" class="form-select form-select-sm" style="width:125px;">
+            <option value="">Semua Tahun</option>
+            {% for y in range(2023, 2028) %}
+            <option value="{{ y }}" {% if tahun==y|string %}selected{% endif %}>{{ y }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-success btn-sm px-3 ms-2"><i class="bi bi-search me-1"></i>Filter</button>
+        <a href="{{ url_for('laporan.laporan_inspeksi') }}" class="btn btn-outline-secondary btn-sm px-3 bg-white">Reset</a>
+    </form>
+</div>
+
+<!-- CHARTS -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-6">
+        <div class="app-card h-100">
+            <p class="card-title fw-bold mb-3"><i class="bi bi-bar-chart-fill text-success me-2"></i>Temuan "Tidak Normal" per Komponen</p>
+            <div style="height:250px;">
+                <canvas id="chartKomponen"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="app-card h-100">
+            <p class="card-title fw-bold mb-3"><i class="bi bi-exclamation-triangle text-success me-2"></i>10 Kendaraan Temuan Terbanyak</p>
+            <div style="height:250px;">
+                <canvas id="chartKendInsp"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- TABLES -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-6">
+        <div class="app-card h-100 p-0 d-flex flex-column">
+            <p class="card-title fw-bold px-4 pt-4 mb-2"><i class="bi bi-list-ul me-2"></i>Komponen Paling Sering Bermasalah</p>
+            <div class="table-responsive flex-grow-1" style="max-height: 280px; overflow-y: auto;">
+                <table class="table align-middle mb-0" style="font-size:0.9rem;">
+                    <thead class="table-light text-muted" style="font-size:0.8rem; position: sticky; top: 0; z-index: 1;">
+                        <tr>
+                            <th class="ps-4">KOMPONEN</th>
+                            <th class="text-center">TIDAK NORMAL</th>
+                            <th class="text-center">%</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for kp in per_komponen %}
+                        <tr>
+                            <td class="ps-4">{{ kp.label }}</td>
+                            <td class="text-center"><span class="badge {% if kp.jml > 0 %}bg-danger{% else %}bg-success{% endif %} rounded-pill px-3">{{ kp.jml }}</span></td>
+                            <td class="text-center">{{ kp.pct }}%</td>
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="3" class="text-center text-muted py-4">Belum ada data.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="app-card h-100 p-0 d-flex flex-column">
+            <p class="card-title fw-bold px-4 pt-4 mb-2"><i class="bi bi-truck me-2"></i>Ringkasan per Kendaraan</p>
+            <div class="table-responsive flex-grow-1" style="max-height: 280px; overflow-y: auto;">
+                <table class="table table-borderless align-middle mb-0 border-top" style="font-size:0.85rem;" id="tableKendaraan">
+                    <tbody id="tbodyKendaraan">
+                    {% for sk in stat_kendaraan %}
+                        <tr class="kend-row border-bottom">
+                            <td class="ps-4 py-3">
+                                <span class="text-dark">{{ sk[0] }}</span><br>
+                                <small class="text-muted">{{ sk[1] }} {{ sk[2] }}</small>
+                            </td>
+                            <td class="text-center text-muted py-3">{{ sk[3] }}</td>
+                            <td class="text-center py-3"><span class="badge {% if sk[4] > 0 %}bg-danger{% else %}bg-success{% endif %} rounded-pill px-2">{{ sk[4] }}</span></td>
+                            <td class="text-end pe-4 text-muted py-3">{{ sk[5].strftime('%d %b %Y') if sk[5] else '-' }}</td>
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="4" class="text-center text-muted py-4">Belum ada data.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- TABEL DETAIL INSPEKSI -->
+<div class="app-card p-0 mb-4">
+    <div class="d-flex justify-content-between align-items-center px-4 pt-3 pb-2 border-bottom">
+        <p class="card-title fw-bold mb-0"><i class="bi bi-table me-2"></i>Detail Inspeksi</p>
+        <div class="d-flex align-items-center gap-3">
+            <input type="text" id="searchInput" class="form-control form-control-sm" placeholder="Cari Kendaraan..." style="width:200px;" onkeyup="searchDetail()">
+            <span class="text-muted" style="font-size:.82rem;">{{ data|length }} data</span>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table align-middle mb-0" id="tableDetail">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-4">NO</th>
+                    <th>TANGGAL</th>
+                    <th>DRIVER</th>
+                    <th>KENDARAAN</th>
+                    <th>KM</th>
+                    <th class="text-center">KOMPONEN TIDAK NORMAL</th>
+                    <th>CATATAN</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% if data %}{% for i in data %}
+                <tr class="detail-row" {% if loop.index > 10 %}style="display: none;"{% endif %}>
+                    <td class="ps-4 row-num"></td>
+                    <td><strong>{{ i[1].strftime('%d %b %Y') if i[1] else '-' }}</strong></td>
+                    <td>{{ i[2] or '-' }}</td>
+                    <td><strong>{{ i[3] }}</strong> <small class="text-muted">{{ i[4] }} {{ i[5] }}</small></td>
+                    <td>{{ "{:,.0f}".format(i[6]|float) if i[6] else '-' }}</td>
+                    <td class="text-center"><span class="badge {% if i[7] and i[7] > 0 %}bg-danger{% else %}bg-success{% endif %} rounded-pill px-3">{{ i[7] or 0 }}</span></td>
+                    <td style="max-width:250px;" class="text-truncate" title="{{ i[8] or '-' }}"><small>{{ i[8] or '-' }}</small></td>
+                </tr>
+            {% endfor %}{% else %}
+                <tr><td colspan="7"><div class="empty-state"><i class="bi bi-inbox"></i>Belum ada data inspeksi.</div></td></tr>
+            {% endif %}
+            </tbody>
+        </table>
+    </div>
+    <!-- Pagination for Detail Inspeksi -->
+    <div class="d-flex justify-content-between align-items-center px-4 py-3 border-top">
+        <div class="text-muted small" id="pageInfoDetail">Menampilkan 0 data</div>
+        <ul class="pagination pagination-sm mb-0" id="paginationULDetail"></ul>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// CHARTS
+Chart.defaults.font.size = 11;
+new Chart(document.getElementById('chartKomponen'), {
+    type: 'bar',
+    data: { 
+        labels: {{ komp_label|safe }}, 
+        datasets: [{ 
+            data: {{ komp_data|safe }}, 
+            backgroundColor: '#c0392b', 
+            borderRadius: 3, 
+            barThickness: 10 
+        }] 
+    },
+    options: { 
+        indexAxis: 'y', 
+        responsive: true, 
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { 
+            x: { grid: { color: '#f0f0f0' }, ticks: { precision: 0 } }, 
+            y: { grid: { display: false } } 
+        } 
+    }
+});
+new Chart(document.getElementById('chartKendInsp'), {
+    type: 'bar',
+    data: { 
+        labels: {{ gk_label|safe }}, 
+        datasets: [{ 
+            data: {{ gk_data|safe }}, 
+            backgroundColor: '#795548', 
+            borderRadius: 3, 
+            barThickness: 12 
+        }] 
+    },
+    options: { 
+        indexAxis: 'y', 
+        responsive: true, 
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { 
+            x: { grid: { color: '#f0f0f0' }, ticks: { precision: 0 } }, 
+            y: { grid: { display: false } } 
+        } 
+    }
+});
+
+// PAGINATION: Detail Inspeksi
+document.addEventListener('DOMContentLoaded', function() {
+    initDetailPagination();
+});
+let detailPage = 1;
+const detailRowsPerPage = 10;
+let detailFilteredRows = [];
+
+function initDetailPagination() {
+    const tbody = document.getElementById('tableDetail').querySelector('tbody');
+    if (!tbody) return;
+    const allRows = Array.from(tbody.querySelectorAll('tr.detail-row'));
+    if (allRows.length === 0) return;
+    window.allDetailRows = allRows;
+    detailFilteredRows = allRows;
+    detailFilteredRows.forEach((row, i) => { row.querySelector('.row-num').textContent = i + 1; });
+    renderDetailPage();
+    renderDetailPagination();
+}
+
+window.searchDetail = function() {
+    const query = document.getElementById('searchInput').value.toLowerCase();
+    if (!window.allDetailRows) return;
+    detailFilteredRows = window.allDetailRows.filter(row => row.textContent.toLowerCase().includes(query));
+    detailFilteredRows.forEach((row, i) => { row.querySelector('.row-num').textContent = i + 1; });
+    window.allDetailRows.forEach(r => r.style.display = 'none');
+    detailPage = 1;
+    renderDetailPage();
+    renderDetailPagination();
+};
+
+function renderDetailPage() {
+    if (window.allDetailRows) window.allDetailRows.forEach(r => r.style.display = 'none');
+    const start = (detailPage - 1) * detailRowsPerPage;
+    const end = start + detailRowsPerPage;
+    detailFilteredRows.slice(start, end).forEach(r => r.style.display = '');
+    const info = document.getElementById('pageInfoDetail');
+    if (info) {
+        if (detailFilteredRows.length === 0) {
+            info.textContent = 'Tidak ada data ditemukan.';
+        } else {
+            info.textContent = `Menampilkan ${start + 1} - ${Math.min(end, detailFilteredRows.length)} dari ${detailFilteredRows.length} data`;
+        }
+    }
+}
+
+function renderDetailPagination() {
+    const ul = document.getElementById('paginationULDetail');
+    if (!ul) return;
+    ul.innerHTML = '';
+    const totalPages = Math.ceil(detailFilteredRows.length / detailRowsPerPage);
+    if (totalPages <= 1) return;
+
+    function addPage(label, page, isActive, isDisabled) {
+        const li = document.createElement('li');
+        li.className = `page-item ${isActive ? 'active' : ''} ${isDisabled ? 'disabled' : ''}`;
+        li.innerHTML = `<a class="page-link" href="#" onclick="changeDetailPage(${page}); return false;">${label}</a>`;
+        ul.appendChild(li);
+    }
+    function addEllipsis() {
+        const li = document.createElement('li');
+        li.className = 'page-item disabled';
+        li.innerHTML = '<span class="page-link">…</span>';
+        ul.appendChild(li);
+    }
+
+    addPage('«', detailPage - 1, false, detailPage === 1);
+    const neighbors = 1;
+    const pages = new Set([1, totalPages]);
+    for (let i = detailPage - neighbors; i <= detailPage + neighbors; i++) {
+        if (i >= 1 && i <= totalPages) pages.add(i);
+    }
+    const sorted = Array.from(pages).sort((a, b) => a - b);
+    let prev = 0;
+    for (const p of sorted) {
+        if (p - prev > 1) addEllipsis();
+        addPage(p, p, p === detailPage, false);
+        prev = p;
+    }
+    addPage('»', detailPage + 1, false, detailPage === totalPages);
+}
+
+window.changeDetailPage = function(page) {
+    const totalPages = Math.ceil(detailFilteredRows.length / detailRowsPerPage);
+    if (page >= 1 && page <= totalPages) {
+        detailPage = page;
+        renderDetailPage();
+        renderDetailPagination();
+    }
+};
+</script>
+{% endblock %}

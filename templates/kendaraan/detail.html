@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% block title %}Detail Kendaraan{% endblock %}
+{% block page_title %}Detail Kendaraan — {{ kendaraan[1] }}{% endblock %}
+{% block topbar_icon %}bi bi-eye{% endblock %}
+{% block head_extra %}
+
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <p class="subtitle mb-0">Informasi lengkap kendaraan operasional.</p>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('kendaraan.edit_kendaraan', id=kendaraan[0]) }}" class="btn btn-warning btn-sm"><i class="bi bi-pencil me-1"></i>Edit</a>
+        <a href="{{ url_for('kendaraan.list_kendaraan') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Kembali</a>
+    </div>
+</div>
+
+<div class="app-card">
+    <p class="section-title"><i class="bi bi-info-circle me-2"></i>Data Umum</p>
+    <div class="row g-3 mb-4">
+        {% for label, val in [('No. Polisi', kendaraan[1]),('Merek', kendaraan[2]),('Tipe', kendaraan[3]),('Model', kendaraan[5]),('Tahun', kendaraan[4]),('No. Rangka', kendaraan[11])] %}
+        <div class="col-md-4"><div class="info-label">{{ label }}</div><div class="info-value">{{ val or '-' }}</div></div>
+        {% endfor %}
+    </div>
+
+    <p class="section-title"><i class="bi bi-gear me-2"></i>Spesifikasi Mesin</p>
+    <div class="row g-3 mb-4">
+        {% set specs = [
+            ('Kapasitas Penumpang', (kendaraan[6]|string + ' orang') if kendaraan[6] else '-'),
+             ('Kapasitas Tangki BBM', (kendaraan[20]|string + ' Liter') if kendaraan[20] else '-'),
+            ('Ukuran Mesin', (kendaraan[7]|string + ' cc') if kendaraan[7] else '-'),
+            ('Jumlah Silinder', (kendaraan[8]|string + ' silinder') if kendaraan[8] else '-'),
+            ('Transmisi', kendaraan[9]),
+            ('SKB (Standar Konsumsi BBM)', (kendaraan[10]|string + ' L/km') if kendaraan[10] else '-')
+        ] %}
+        {% for label, val in specs %}
+        <div class="col-md-4"><div class="info-label">{{ label }}</div><div class="info-value">{{ val or '-' }}</div></div>
+        {% endfor %}
+    </div>
+
+    <div class="mt-4 pt-3 border-top">
+        <p class="section-title mb-0" style="font-size: 1.15rem;">
+            <i class="bi bi-fuel-pump me-2 text-muted"></i>Jenis BBM: 
+            <span class="text-dark fw-medium ms-1">
+                {%- set bbm_items = [] -%}
+                {%- if kendaraan[12] -%}{% set _ = bbm_items.append(kendaraan[12]) %}{%- endif -%}
+                {%- if kendaraan[13] -%}{% set _ = bbm_items.append(kendaraan[13]) %}{%- endif -%}
+                {%- if kendaraan[14] -%}{% set _ = bbm_items.append(kendaraan[14]) %}{%- endif -%}
+                {{ bbm_items | join(', ') }}
+            </span>
+        </p>
+    </div>
+</div>
+
+<div class="app-card">
+    <p class="section-title"><i class="bi bi-camera me-2"></i>Foto Kendaraan</p>
+    <div class="row g-3">
+        {% for idx, label in [(15,'Depan'),(16,'Kanan'),(17,'Kiri'),(18,'Belakang'),(19,'STNK')] %}
+        <div class="col-md-4">
+            <p class="text-muted mb-1" style="font-size:.82rem;font-weight:600;">{{ label }}</p>
+            {% if kendaraan[idx] %}
+            <img src="{{ url_for('static', filename='uploads/kendaraan/' + kendaraan[idx]) }}" class="foto-box" data-bs-toggle="modal" data-bs-target="#modalFoto" onclick="document.getElementById('modalImg').src=this.src">
+            {% else %}<div class="no-foto"><i class="bi bi-image"></i></div>{% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="modal fade" id="modalFoto" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content bg-transparent border-0 shadow-none">
+            <div class="modal-body text-center position-relative p-0">
+                <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-2" data-bs-dismiss="modal" aria-label="Close" style="z-index: 1060; background-color: rgba(0,0,0,0.7); padding: 12px; border-radius: 50%; opacity: 1; box-shadow: 0 4px 6px rgba(0,0,0,0.3);"></button>
+                <img id="modalImg" src="" class="img-fluid rounded" style="max-height: 85vh; object-fit: contain; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

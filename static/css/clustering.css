@@ -1,0 +1,11 @@
+/* ==========================================
+   File: static/css/clustering.css
+   ========================================== */
+.card-custom { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 22px; box-shadow: var(--shadow); margin-bottom: 20px; }
+.btn-cluster { background: linear-gradient(135deg, #1a472a, #2d6a4f); color: #fff; border: none; border-radius: 8px; padding: 10px 28px; font-weight: 600; }
+.btn-cluster:hover { opacity: .9; color: #fff; }
+.stat-box { background: #f8f9fa; border-radius: 10px; padding: 16px 20px; text-align: center; }
+.stat-box .val { font-size: 1.8rem; font-weight: 700; }
+.stat-box .lbl { font-size: .8rem; color: #888; margin-top: 2px; }
+.result-box { background: linear-gradient(135deg, #e8f5e9, #f0fff4); border: 1px solid #c8e6c9; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+.step-badge { background: #1a472a; color: #fff; border-radius: 50%; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; font-size: .75rem; font-weight: 700; margin-right: 8px; }

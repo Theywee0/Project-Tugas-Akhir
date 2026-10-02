@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}Edit Kebun{% endblock %}
+{% block page_title %}Edit Kebun{% endblock %}
+{% block topbar_icon %}bi bi-pencil-square{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <p class="subtitle mb-0">Perbarui nama lokasi kebun.</p>
+    <a href="{{ url_for('kebun.list_kebun') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Kembali</a>
+</div>
+<div class="app-card" style="max-width:560px;">
+    <form method="POST">
+        <div class="mb-3">
+            <label class="form-label">Nama Kebun <span class="req">*</span></label>
+            <input type="text" name="Nama_Kebun" class="form-control" value="{{ kebun[1] }}" required autofocus>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Alamat Lengkap</label>
+            <textarea name="Alamat" class="form-control" rows="2">{{ kebun[2] if kebun[2] else '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="form-label">Titik Koordinat</label>
+            <input type="text" name="Koordinat" class="form-control" value="{{ kebun[3] if kebun[3] else '' }}">
+        </div>
+        <button type="submit" class="btn btn-success px-4"><i class="bi bi-check-circle me-2"></i>Perbarui</button>
+        <a href="{{ url_for('kebun.list_kebun') }}" class="btn btn-outline-secondary px-4">Batal</a>
+    </form>
+</div>
+{% endblock %}

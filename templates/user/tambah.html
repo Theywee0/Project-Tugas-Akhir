@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% block title %}Tambah User{% endblock %}
+{% block page_title %}Tambah User{% endblock %}
+{% block topbar_icon %}bi bi-person-plus{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <p class="subtitle mb-0">Buat akun pengguna baru.</p>
+    <a href="{{ url_for('user.list_user') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Kembali</a>
+</div>
+<div class="app-card" style="max-width:640px;">
+    <form method="POST" autocomplete="off">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">Nama Lengkap <span class="req">*</span></label>
+                <input type="text" name="Nama" class="form-control" required autofocus autocomplete="off">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Role <span class="req">*</span></label>
+                {% if session['role'] == 'kepala_operasional_gs' %}
+                <input type="text" class="form-control" value="Driver" readonly style="background-color: #e9ecef; color: #6c757d;">
+                <input type="hidden" name="Role" value="driver">
+                {% else %}
+                <select name="Role" class="form-select" required>
+                    <option value="driver">Driver</option>
+                    <option value="kepala_operasional_gs">Kepala Operasional GS</option>
+                </select>
+                {% endif %}
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Username <span class="req">*</span></label>
+                <input type="text" name="Username" class="form-control" required autocomplete="new-username">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Password <span class="req">*</span></label>
+                <div class="input-group">
+                    <input type="password" name="Password" id="passUser" class="form-control border-end-0" required autocomplete="new-password">
+                    <span class="input-group-text bg-white border-start-0" style="cursor: pointer;" onclick="togglePass('passUser')">
+                        <i class="bi bi-eye text-muted"></i>
+                    </span>
+                </div>
+                <div id="passRequirements" class="mt-2" style="font-size: 0.7rem;">
+                    <div id="req-len" class="text-danger mb-1"><i class="bi bi-x-circle me-1"></i>Minimal 8 Karakter</div>
+                    <div id="req-cap" class="text-danger mb-1"><i class="bi bi-x-circle me-1"></i>Minimal 1 Huruf Kapital</div>
+                    <div id="req-sym" class="text-danger"><i class="bi bi-x-circle me-1"></i>Minimal 1 Simbol (@, #, $, dll)</div>
+                </div>
+            </div>
+        </div>
+        <div class="alert alert-info mt-3 mb-3 py-2" style="font-size:.85rem;">
+            <i class="bi bi-info-circle me-1"></i>Untuk akun <strong>driver</strong> yang juga perlu data SIM/kontak, gunakan menu <strong>Data Driver</strong> agar profil driver ikut dibuat.
+        </div>
+        <button type="submit" id="btnSimpan" class="btn btn-success px-4" disabled><i class="bi bi-check-circle me-2"></i>Simpan</button>
+        <a href="{{ url_for('user.list_user') }}" class="btn btn-outline-secondary px-4">Batal</a>
+    </form>
+</div>
+
+<script>
+function togglePass(id) {
+    const input = document.getElementById(id);
+    const btn = input.nextElementSibling.querySelector('i');
+    if (input.type === "password") {
+        input.type = "text";
+        btn.classList.remove('bi-eye');
+        btn.classList.add('bi-eye-slash');
+    } else {
+        input.type = "password";
+        btn.classList.remove('bi-eye-slash');
+        btn.classList.add('bi-eye');
+    }
+}
+
+document.getElementById('passUser').addEventListener('input', function() {
+    const val = this.value;
+    const isLen = val.length >= 8;
+    const isCap = /[A-Z]/.test(val);
+    const isSym = /[!@#$%^&*(),.?":{}|<>]/.test(val);
+    
+    const updateReq = (id, valid, text) => {
+        const el = document.getElementById(id);
+        if (valid) {
+            el.className = 'text-success mb-1';
+            el.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i>' + text;
+        } else {
+            el.className = 'text-danger mb-1';
+            el.innerHTML = '<i class="bi bi-x-circle me-1"></i>' + text;
+        }
+    };
+    
+    updateReq('req-len', isLen, 'Minimal 8 Karakter');
+    updateReq('req-cap', isCap, 'Minimal 1 Huruf Kapital');
+    updateReq('req-sym', isSym, 'Minimal 1 Simbol (@, #, $, dll)');
+    
+    document.getElementById('btnSimpan').disabled = !(isLen && isCap && isSym);
+});
+</script>
+{% endblock %}

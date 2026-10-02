@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Mock Grafik Clustering</title>
+    <link href="/static/vendor/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
+    <link href="/static/css/app.css" rel="stylesheet">
+    <link href="/static/css/style.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { background-color: #f4f6f9; font-family: "Segoe UI", Roboto, sans-serif; }
+        .navbar-custom { background: #fff; padding: 15px 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
+        .card-custom { background: #fff; border: 1px solid #e9ecef; border-radius: 0.5rem; box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.02); padding: 20px; }
+        .stat-card { background: #fff; border: 1px solid #e9ecef; border-radius: 0.5rem; box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.02); padding: 15px; text-align: center; height: 100%; display:flex; flex-direction: column; justify-content: center;}
+        .stat-num { font-size: 1.8rem; font-weight: bold; color: #2d6a4f; margin-bottom: 5px; }
+        .stat-label { font-size: 0.85rem; color: #6c757d; font-weight: 500; }
+        .btn-cluster { background-color: #2d6a4f; color: white; border: none; padding: 10px 20px; border-radius: 5px; font-weight: 600; }
+        .avatar { background: #2d6a4f; color: white; border-radius: 50%; width: 35px; height: 35px; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem;}
+        .text-success { color: #2d6a4f !important; }
+    </style>
+</head>
+<body>
+    <div class="navbar-custom">
+        <h5 class="mb-0 fw-bold" style="color: #2d6a4f;"><i class="bi bi-diagram-3-fill me-2"></i>Analisis K-Means Clustering</h5>
+        <div class="d-flex align-items-center">
+            <span class="fw-bold me-3 text-dark" style="font-size: 0.85rem;">KEPALA GS <span class="ms-2 fw-normal text-muted">AGUS DERMAWAN</span></span>
+            <div class="avatar">AG</div>
+        </div>
+    </div>
+
+    <div class="container-fluid px-4">
+        
+        <!-- Summary Cards & Button -->
+        <div class="row g-3 mb-4 align-items-center">
+            <div class="col-md-2">
+                <div class="stat-card">
+                    <div class="stat-num text-danger">4</div>
+                    <div class="stat-label">Kerusakan Berat</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="stat-card">
+                    <div class="stat-num" style="color: #198754;">14</div>
+                    <div class="stat-label">Kerusakan Ringan</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="stat-card">
+                    <div class="stat-num" style="color: #ffb703;">16</div>
+                    <div class="stat-label">Normal</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="stat-card border-dark">
+                    <div class="stat-num text-dark">34</div>
+                    <div class="stat-label">Total Kendaraan</div>
+                </div>
+            </div>
+            <div class="col-md-4 text-end">
+                <button class="btn-cluster shadow-sm"><i class="bi bi-play-fill me-2"></i>Jalankan Clustering</button>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <!-- Kiri: Scatter Plot -->
+            <div class="col-lg-7">
+                <div class="card-custom h-100 d-flex flex-column">
+                    <h6 class="fw-bold mb-3"><i class="bi bi-graph-up me-2 text-success"></i>Visualisasi Klaster</h6>
+                    <div style="flex-grow: 1; position: relative; min-height: 480px;">
+                        <canvas id="chartScatter"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Kanan: Elbow & Profiling -->
+            <div class="col-lg-5 d-flex flex-column">
+                <div class="card-custom mb-4" style="height: 220px;">
+                    <h6 class="fw-bold mb-2"><i class="bi bi-graph-down-arrow me-2 text-success"></i>Elbow Method</h6>
+                    <div style="position: relative; height: 140px;">
+                        <canvas id="chartElbow"></canvas>
+                    </div>
+                </div>
+
+                <div class="card-custom" style="flex-grow: 1;">
+                    <h6 class="fw-bold mb-3"><i class="bi bi-bar-chart me-2 text-success"></i>Rata-rata per Klaster</h6>
+                    <div>
+                        
+                        <div class="p-2 border rounded mb-2" style="background:#fafafa; font-size: 0.8rem;">
+                            <div class="fw-bold mb-1 border-bottom pb-1" style="color:#2d6a4f;">Kerusakan Berat</div>
+                            <div class="row g-1 text-muted mt-1">
+                                <div class="col-6 d-flex justify-content-between"><span>Jarak:</span> <span class="fw-bold text-dark">26,500 km</span></div>
+                                <div class="col-6 d-flex justify-content-between"><span>BBM:</span> <span class="fw-bold text-dark">2,600 L</span></div>
+                                <div class="col-6 d-flex justify-content-between"><span>Rasio:</span> <span class="fw-bold text-dark">0.0098</span></div>
+                                <div class="col-6 d-flex justify-content-between"><span>Maint:</span> <span class="fw-bold text-dark">22x</span></div>
+                                <div class="col-12 d-flex justify-content-between mt-1 pt-1 border-top"><span>Inspeksi Rusak:</span> <span class="fw-bold text-dark">55 item</span></div>
+                            </div>
+                        </div>
+
+                        <div class="p-2 border rounded mb-2" style="background:#fafafa; font-size: 0.8rem;">
+                            <div class="fw-bold mb-1 border-bottom pb-1" style="color:#2d6a4f;">Kerusakan Ringan</div>
+                            <div class="row g-1 text-muted mt-1">
+                                <div class="col-6 d-flex justify-content-between"><span>Jarak:</span> <span class="fw-bold text-dark">17,942 km</span></div>
+                                <div class="col-6 d-flex justify-content-between"><span>BBM:</span> <span class="fw-bold text-dark">1,560 L</span></div>
+                                <div class="col-6 d-flex justify-content-between"><span>Rasio:</span> <span class="fw-bold text-dark">0.0031</span></div>
+                                <div class="col-6 d-flex justify-content-between"><span>Maint:</span> <span class="fw-bold text-dark">13.5x</span></div>
+                                <div class="col-12 d-flex justify-content-between mt-1 pt-1 border-top"><span>Inspeksi Rusak:</span> <span class="fw-bold text-dark">8.5 item</span></div>
+                            </div>
+                        </div>
+
+                        <div class="p-2 border rounded mb-2" style="background:#fafafa; font-size: 0.8rem;">
+                            <div class="fw-bold mb-1 border-bottom pb-1" style="color:#2d6a4f;">Normal</div>
+                            <div class="row g-1 text-muted mt-1">
+                                <div class="col-6 d-flex justify-content-between"><span>Jarak:</span> <span class="fw-bold text-dark">7,421 km</span></div>
+                                <div class="col-6 d-flex justify-content-between"><span>BBM:</span> <span class="fw-bold text-dark">650 L</span></div>
+                                <div class="col-6 d-flex justify-content-between"><span>Rasio:</span> <span class="fw-bold text-dark">0.0012</span></div>
+                                <div class="col-6 d-flex justify-content-between"><span>Maint:</span> <span class="fw-bold text-dark">4.2x</span></div>
+                                <div class="col-12 d-flex justify-content-between mt-1 pt-1 border-top"><span>Inspeksi Rusak:</span> <span class="fw-bold text-dark">0.5 item</span></div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function generateScatter(count, minX, maxX, minY, maxY) {
+            let data = [];
+            for(let i=0; i<count; i++){
+                data.push({
+                    x: Math.floor(Math.random() * (maxX - minX + 1) + minX),
+                    y: Math.floor(Math.random() * (maxY - minY + 1) + minY)
+                });
+            }
+            return data;
+        }
+
+        const ctxScatter = document.getElementById("chartScatter").getContext("2d");
+        new Chart(ctxScatter, {
+            type: "scatter",
+            data: {
+                datasets: [
+                    { label: "Kerusakan Ringan", data: generateScatter(14, 11000, 18000, 1100, 1800), backgroundColor: "#40a578", pointRadius: 7 },
+                    { label: "Normal", data: generateScatter(16, 1000, 8000, 100, 800), backgroundColor: "#fb8500", pointRadius: 7 },
+                    { label: "Kerusakan Berat", data: generateScatter(4, 22000, 29000, 2200, 2900), backgroundColor: "#e63946", pointRadius: 7 }
+                ]
+            },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                scales: {
+                    x: { title: { display: true, text: "Total Jarak (km)" }, max: 30000 },
+                    y: { title: { display: true, text: "Rasio Konsumsi (L/km)" }, max: 3000 }
+                },
+                plugins: { legend: { position: "top" } } 
+            }
+        });
+
+        const ctxElbow = document.getElementById("chartElbow").getContext("2d");
+        new Chart(ctxElbow, {
+            type: "line",
+            data: {
+                labels: [1, 2, 3, 4, 5, 6],
+                datasets: [{ label: "Inertia", data: [30, 17, 10, 8, 7, 6], borderColor: "#2d6a4f", backgroundColor: "rgba(45, 106, 79, 0.1)", borderWidth: 2, pointBackgroundColor: "#1a4331", pointRadius: 4, fill: true, tension: 0.3 }]
+            },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                scales: {
+                    x: { title: { display: true, text: "Jumlah Cluster (k)", font:{size:10} } }
+                },
+                plugins: { legend: { display: false } } 
+            }
+        });
+    </script>
+</body>
+</html>

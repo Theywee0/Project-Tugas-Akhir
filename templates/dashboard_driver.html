@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import status_badge %}
+{% block title %}Dashboard Driver{% endblock %}
+{% block page_title %}Dashboard Driver{% endblock %}
+{% block topbar_icon %}bi bi-house-door-fill{% endblock %}
+
+{% block content %}
+<!-- E — Pengingat data milik driver yang belum diverifikasi -->
+{% if pending.total > 0 %}
+<div class="app-card mb-4" style="border-left:4px solid #f39c12;">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <div>
+            <p class="card-title mb-1"><i class="bi bi-hourglass-split text-warning"></i> {{ pending.total }} Data Anda Belum Diverifikasi</p>
+            <small class="text-muted">Masih dapat Anda perbaiki sebelum diverifikasi admin.</small>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            {% if pending.perjalanan %}<a href="{{ url_for('perjalanan.list_perjalanan') }}" class="btn btn-sm btn-outline-secondary">Perjalanan <span class="badge bg-warning text-dark ms-1">{{ pending.perjalanan }}</span></a>{% endif %}
+            {% if pending.bbm %}<a href="{{ url_for('bbm.list_bbm') }}" class="btn btn-sm btn-outline-secondary">BBM <span class="badge bg-warning text-dark ms-1">{{ pending.bbm }}</span></a>{% endif %}
+            {% if pending.maintenance %}<a href="{{ url_for('maintenance.list_maintenance') }}" class="btn btn-sm btn-outline-secondary">Maintenance <span class="badge bg-warning text-dark ms-1">{{ pending.maintenance }}</span></a>{% endif %}
+            {% if pending.inspeksi %}<a href="{{ url_for('inspeksi.list_inspeksi') }}" class="btn btn-sm btn-outline-secondary">Inspeksi <span class="badge bg-warning text-dark ms-1">{{ pending.inspeksi }}</span></a>{% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Filter periode: SATU kontrol untuk ketiga kartu sekaligus -->
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <span class="text-muted" style="font-size:.9rem;"><i class="bi bi-funnel me-1"></i>Statistik untuk periode: <strong>{{ periode_label }}</strong></span>
+    <div class="btn-group btn-group-sm" role="group" aria-label="Filter periode">
+        {% for key, lbl in periode_opsi.items() %}
+        <a href="{{ url_for('auth.dashboard_driver', periode=key) }}"
+           class="btn {{ 'btn-success' if periode == key else 'btn-outline-secondary' }}">{{ lbl }}</a>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Statistik ringkas (ketiganya mengikuti filter periode yang sama) -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="stat-card d-flex justify-content-between align-items-center">
+            <div>
+                <div class="value">{{ stats.perjalanan }}</div>
+                <div class="label">Perjalanan {{ periode_label }}</div>
+            </div>
+            <div class="icon text-success"><i class="bi bi-map-fill"></i></div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card d-flex justify-content-between align-items-center">
+            <div>
+                <div class="value">{{ "%.0f"|format(stats.bbm) }} <small class="fs-6 text-muted">L</small></div>
+                <div class="label">BBM {{ periode_label }}</div>
+            </div>
+            <div class="icon text-warning"><i class="bi bi-fuel-pump-fill"></i></div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card d-flex justify-content-between align-items-center">
+            <div>
+                <div class="value">{{ "{:,.0f}".format(stats.total_jarak) }} <small class="fs-6 text-muted">km</small></div>
+                <div class="label">Total Jarak {{ periode_label }}</div>
+            </div>
+            <div class="icon" style="color:var(--accent);"><i class="bi bi-speedometer2"></i></div>
+        </div>
+    </div>
+</div>
+
+<!-- G — Empty hint bila tidak ada aktivitas pada periode terpilih -->
+{% if stats.perjalanan == 0 and stats.bbm == 0 and stats.total_jarak == 0 %}
+<div class="text-muted mb-4" style="font-size:.88rem;"><i class="bi bi-info-circle me-1"></i>Belum ada aktivitas pada periode <strong>{{ periode_label }}</strong>. Mulai mencatat lewat <strong>Aksi Cepat</strong> di bawah.</div>
+{% endif %}
+
+<!-- F — Aktivitas terbaru milik driver -->
+<div class="app-card mb-4">
+    <p class="card-title mb-3"><i class="bi bi-clock-history"></i> Aktivitas Terbaru</p>
+    {% if aktivitas %}
+    <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+            <thead><tr><th class="ps-2">Tanggal</th><th>Aktivitas</th><th>Kendaraan</th><th>Status</th></tr></thead>
+            <tbody>
+                {% for a in aktivitas %}
+                <tr>
+                    <td class="ps-2">{{ a[0] }}</td>
+                    <td>{{ a[1] }}</td>
+                    <td>{{ a[2] or '-' }}</td>
+                    <td>{{ status_badge(a[3]) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state"><i class="bi bi-inbox"></i>Belum ada aktivitas tercatat.</div>
+    {% endif %}
+</div>
+
+<!-- Aksi cepat -->
+<h6 class="fw-bold mb-3"><i class="bi bi-lightning-charge-fill text-warning me-2"></i>Aksi Cepat</h6>
+<div class="row g-3 mb-4">
+    {% set actions = [
+        ('perjalanan.tambah_perjalanan', 'bi-plus-circle-fill', 'Input Perjalanan'),
+        ('bbm.tambah_bbm', 'bi-fuel-pump-fill', 'Input BBM'),
+        ('inspeksi.tambah_inspeksi', 'bi-clipboard-check-fill', 'Input Inspeksi'),
+        ('maintenance.tambah_maintenance', 'bi-tools', 'Input Maintenance')
+    ] %}
+    {% for ep, icon, label in actions %}
+    <div class="col-6 col-md-3">
+        <a href="{{ url_for(ep) }}" class="app-card text-decoration-none d-block text-center h-100 quick-action">
+            <i class="bi {{ icon }} d-block mb-2" style="font-size:1.9rem;color:var(--accent);"></i>
+            <span class="fw-semibold" style="color:var(--ink);font-size:.88rem;">{{ label }}</span>
+        </a>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Panduan -->
+<div class="app-card">
+    <p class="card-title"><i class="bi bi-info-circle"></i> Panduan Penggunaan</p>
+    <ul class="mb-0 text-muted" style="font-size:.9rem;line-height:1.9;">
+        <li>Lakukan <strong>Input Perjalanan</strong> setiap kali menggunakan kendaraan.</li>
+        <li>Catat <strong>Pengisian BBM</strong> jika melakukan pengisian selama perjalanan.</li>
+        <li>Lakukan <strong>Inspeksi</strong> sebelum dan sesudah perjalanan.</li>
+        <li>Laporkan kerusakan melalui menu <strong>Maintenance</strong>.</li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block head_extra %}
+
+{% endblock %}

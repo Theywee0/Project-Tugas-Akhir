@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}Manajemen User{% endblock %}
+{% block page_title %}Manajemen User{% endblock %}
+{% block topbar_icon %}bi bi-people-fill{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <div><p class="subtitle mb-0">Kelola akun pengguna sistem (admin & driver).</p></div>
+    {% if session['role'] == 'admin' %}
+    <a href="{{ url_for('user.tambah_user') }}" class="btn btn-success"><i class="bi bi-person-plus me-1"></i>Tambah User</a>
+    {% endif %}
+</div>
+
+<div class="app-card p-0">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th width="60" class="ps-3">No</th>
+                    <th>Nama</th>
+                    <th>Username</th>
+                    <th>Role</th>
+                    <th>Dibuat</th>
+                    {% if session['role'] == 'admin' %}
+                    <th width="130" class="text-end pe-4">Aksi</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+            {% if data %}
+                {% for u in data %}
+                <tr>
+                    <td class="ps-3">{{ loop.index }}</td>
+                    <td><strong>{{ u[1] }}</strong>{% if u[0]==session['user_id'] %} <span class="badge bg-secondary">Anda</span>{% endif %}</td>
+                    <td>{{ u[2] }}</td>
+                    <td>
+                        {% if u[3]=='admin' %}<span class="role-badge admin">Admin</span>
+                        {% elif u[3]=='kepala_operasional_gs' %}<span class="role-badge admin" style="background:var(--primary-color);">Kepala GS</span>
+                        {% else %}<span class="role-badge driver">Driver</span>{% endif %}
+                    </td>
+                    <td><small class="text-muted">{{ u[4] }}</small></td>
+                    
+                    {% if session['role'] == 'admin' %}
+                    <td class="text-end pe-4">
+                        <a href="{{ url_for('user.edit_user', id=u[0]) }}" class="btn btn-warning btn-sm btn-icon"><i class="bi bi-pencil"></i></a>
+                        {% if u[0] != session['user_id'] %}
+                        <a href="{{ url_for('user.hapus_user', id=u[0]) }}" class="btn btn-danger btn-sm btn-icon" onclick="return confirm('Yakin hapus user ini? Data driver terkait juga akan dihapus.')"><i class="bi bi-trash"></i></a>
+                        {% endif %}
+                    </td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr><td colspan="{% if session['role'] == 'admin' %}6{% else %}5{% endif %}"><div class="empty-state"><i class="bi bi-inbox"></i>Belum ada data user.</div></td></tr>
+            {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import status_badge, tombol_verifikasi %}
+{% block title %}Pengisian BBM{% endblock %}
+{% block page_title %}Pengisian BBM{% endblock %}
+{% block topbar_icon %}bi bi-fuel-pump-fill{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <p class="subtitle mb-0">{% if session['role']=='driver' %}Riwayat pengisian BBM kendaraan operasional Anda.{% else %}Seluruh data pengisian BBM kendaraan operasional.{% endif %}</p>
+    {% if session['role'] == 'driver' %}
+    <a href="{{ url_for('bbm.tambah_bbm') }}" class="btn btn-success"><i class="bi bi-plus-lg me-1"></i>Tambah BBM</a>
+    {% endif %}
+</div>
+
+<div class="app-card p-0">
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead><tr><th class="ps-3">No</th><th>Tanggal</th><th>Driver</th><th>Kendaraan</th><th>Kebun</th><th>Jenis BBM</th><th>Jumlah</th><th>Status</th><th class="text-end pe-4">Aksi</th></tr></thead>
+            <tbody>
+            {% if data %}
+                {% for b in data %}
+                <tr>
+                    <td class="ps-3">{{ loop.index }}</td>
+                    <td>{{ b[1] }}<br><small class="text-muted">{{ b[2] }}</small></td>
+                    <td>{{ b[13] or '-' }}</td>
+                    <td>{{ b[14] or '-' }}</td>
+                    <td>{{ b[15] or '-' }}</td>
+                    <td><span class="badge bg-warning text-dark">{{ b[10] }}</span></td>
+                    <td><strong>{{ b[11] }} L</strong></td>
+                    <td>{{ status_badge(b[16]) }}</td>
+                    <td class="text-end pe-4">
+                        <a href="{{ url_for('bbm.detail_bbm', id=b[0]) }}" class="btn btn-info btn-sm btn-icon" title="Detail"><i class="bi bi-eye"></i></a>
+                        {% if session['role']=='kepala_operasional_gs' or b[16]=='Belum' %}
+                        <a href="{{ url_for('bbm.edit_bbm', id=b[0]) }}" class="btn btn-warning btn-sm btn-icon" title="Edit"><i class="bi bi-pencil"></i></a>
+                        {% endif %}
+                        {% if session['role']=='kepala_operasional_gs' %}
+                        {{ tombol_verifikasi(b[16], 'bbm.verifikasi_bbm', 'bbm.batal_verifikasi_bbm', b[0]) }}
+                        <a href="{{ url_for('bbm.hapus_bbm', id=b[0]) }}" class="btn btn-danger btn-sm btn-icon" title="Hapus" onclick="return confirm('Yakin hapus data BBM ini?')"><i class="bi bi-trash"></i></a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr><td colspan="9"><div class="empty-state"><i class="bi bi-inbox"></i>Belum ada data pengisian BBM.</div></td></tr>
+            {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

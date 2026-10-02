@@ -1,0 +1,331 @@
+
+// --- NEW BLOCK --- 
+function previewFoto(input, previewId){const p=document.getElementById(previewId);if(input.files&&input.files[0]){const r=new FileReader();r.onload=e=>{p.src=e.target.result;p.style.display='block';};r.readAsDataURL(input.files[0]);}}
+// --- NEW BLOCK --- 
+function hitungKM(){
+    const a = parseFloat(document.getElementById('kmAwal').value) || 0,
+          b = parseFloat(document.getElementById('kmAkhir').value) || 0;
+    document.getElementById('hasilKM').textContent = (b>a ? (b-a).toFixed(1) : 0) + ' km';
+}
+
+function isiJenisBBM(){
+    const s = document.getElementById('selKendaraan'),
+          o = s.options[s.selectedIndex],
+          bs = document.getElementById('selJenisBBM');
+          
+    bs.innerHTML = '<option value="">-- Pilih Jenis BBM --</option>';
+    
+    if (s.value !== "") {
+        ['bbm1','bbm2','bbm3'].forEach(k => {
+            const v = o.dataset[k];
+            if(v && v !== 'None' && v.trim() !== '') {
+                bs.innerHTML += `<option value="${v}">${v}</option>`;
+            }
+        });
+    }
+
+    if(o) {
+        const maxBBM = o.dataset.kapasitas;
+        const inputBBM = document.querySelector('input[name="Jumlah_BBM"]');
+        if(maxBBM) {
+            inputBBM.max = maxBBM;
+            inputBBM.placeholder = `Maks: ${maxBBM} Liter`;
+        } else {
+            inputBBM.removeAttribute('max');
+            inputBBM.placeholder = 'cth: 40';
+        }
+    }
+}
+
+function isiKmAwal(){
+    const sel = document.getElementById('selKendaraan'),
+          kmAwal = document.getElementById('kmAwal'),
+          hint = document.getElementById('kmAwalHint');
+    const id = sel.value;
+    
+    if(!id){
+        kmAwal.value = '';
+        kmAwal.readOnly = true;
+        hint.innerHTML = '<i class="bi bi-info-circle me-1"></i>Pilih kendaraan dulu — terisi otomatis';
+        hitungKM();
+        return;
+    }
+    
+    hint.innerHTML = '<i class="bi bi-arrow-repeat me-1"></i>Memuat KM terakhir...';
+    fetch(`/api/kendaraan/${id}/km-terakhir`)
+        .then(r => r.json())
+        .then(d => {
+            const km = parseFloat(d.km_terakhir) || 0;
+            if(km > 0) {
+                kmAwal.value = km;
+                kmAwal.readOnly = true;
+                hint.innerHTML = '<i class="bi bi-check-circle me-1 text-success"></i>Otomatis dari KM terakhir kendaraan';
+            } else {
+                kmAwal.value = '';
+                kmAwal.readOnly = false;
+                hint.innerHTML = '<i class="bi bi-pencil me-1"></i>Belum ada riwayat KM — isi bila perlu';
+            }
+            hitungKM();
+        })
+        .catch(() => {
+            kmAwal.readOnly = false;
+            hint.innerHTML = '<i class="bi bi-exclamation-triangle me-1 text-warning"></i>Gagal memuat — isi manual';
+        });
+}
+
+function previewFoto(input, id){
+    const p = document.getElementById(id);
+    if(input.files && input.files[0]){
+        const r = new FileReader();
+        r.onload = e => { p.src = e.target.result; p.style.display = 'block'; };
+        r.readAsDataURL(input.files[0]);
+    }
+}
+
+window.addEventListener('load', () => {
+    const n = new Date();
+    document.querySelector('[name=Tanggal]').value = n.toISOString().split('T')[0];
+    document.querySelector('[name=Jam]').value = n.toTimeString().slice(0,5);
+});
+// --- NEW BLOCK --- 
+function togglePassword() {
+            const field = document.getElementById('passwordField');
+            const icon  = document.getElementById('eyeIcon');
+            if (field.type === 'password') {
+                field.type = 'text';
+                icon.classList.replace('bi-eye', 'bi-eye-slash');
+            } else {
+                field.type = 'password';
+                icon.classList.replace('bi-eye-slash', 'bi-eye');
+            }
+        }
+// --- NEW BLOCK --- 
+window.clusteringChartData = {
+        labels: {{ hasil.elbow_k|tojson }},
+        wcss: {{ hasil.elbow_wcss|tojson }}
+    };
+// --- NEW BLOCK --- 
+new Chart(document.getElementById('chartKomponen'), {
+    type: 'bar',
+    data: { labels: {{ komp_label|safe }}, datasets: [{ label: 'Tidak Normal', data: {{ komp_data|safe }}, backgroundColor: '#e8a0a0', borderRadius: 5, borderSkipped: false }] },
+    options: { indexAxis: 'y', responsive: true, plugins: { legend: { display: false } },
+        scales: { x: { grid: { color: '#f0f0f0' }, ticks: { precision: 0 } }, y: { grid: { display: false } } } }
+});
+new Chart(document.getElementById('chartKendInsp'), {
+    type: 'bar',
+    data: { labels: {{ gk_label|safe }}, datasets: [{ label: 'Temuan Tidak Normal', data: {{ gk_data|safe }}, backgroundColor: '#d5b8a8', borderRadius: 6, borderSkipped: false }] },
+    options: { indexAxis: 'y', responsive: true, plugins: { legend: { display: false } },
+        scales: { x: { grid: { color: '#f0f0f0' }, ticks: { precision: 0 } }, y: { grid: { display: false } } } }
+});
+// --- NEW BLOCK --- 
+function hitungBaris(idArea, idCounter){const v=document.getElementById(idArea).value;document.getElementById(idCounter).textContent=v.split('\n').filter(l=>l.trim()!=='').length;}
+// Auto-fill KM dari KM terakhir kendaraan (logika terpusat get_last_km via API).
+function isiKmKendaraan(){
+  const sel=document.getElementById('selKendaraan'),km=document.getElementById('kmKendaraan'),hint=document.getElementById('kmHint');
+  const id=sel.value;
+  if(!id){km.readOnly=true;return;}
+  hint.innerHTML='<i class="bi bi-arrow-repeat me-1"></i>Memuat KM terakhir...';
+  fetch(`/api/kendaraan/${id}/km-terakhir`).then(r=>r.json()).then(d=>{
+    const v=parseFloat(d.km_terakhir)||0;
+    if(v>0){km.value=v;km.readOnly=true;hint.innerHTML='<i class="bi bi-check-circle me-1 text-success"></i>Otomatis dari KM terakhir kendaraan';}
+    else{km.readOnly=false;hint.innerHTML='<i class="bi bi-pencil me-1"></i>Belum ada riwayat KM — isi manual';}
+  }).catch(()=>{km.readOnly=false;hint.innerHTML='<i class="bi bi-exclamation-triangle me-1 text-warning"></i>Gagal memuat — isi manual';});
+}
+function previewFoto(input,id){const p=document.getElementById(id);if(input.files&&input.files[0]){const r=new FileReader();r.onload=e=>{p.src=e.target.result;p.style.display='block';};r.readAsDataURL(input.files[0]);}}
+hitungBaris('txtKeluhan','ctrKeluhan');hitungBaris('txtSpare','ctrSpare');
+// --- NEW BLOCK --- 
+function previewFoto(input){const p=document.getElementById('previewSIM');if(input.files&&input.files[0]){const r=new FileReader();r.onload=e=>{p.src=e.target.result;p.style.display='block';};r.readAsDataURL(input.files[0]);}}
+// --- NEW BLOCK --- 
+const currentBBM = "{{ b[10] or '' }}";
+function hitungKM(){const a=parseFloat(document.getElementById('kmAwal').value)||0,b=parseFloat(document.getElementById('kmAkhir').value)||0;document.getElementById('hasilKM').textContent=(b>a?(b-a).toFixed(1):0)+' km';}
+function isiJenisBBM(keep){
+    const s=document.getElementById('selKendaraan'),
+          o=s.options[s.selectedIndex],
+          bs=document.getElementById('selJenisBBM');
+          
+    // Kosongkan isi dropdown dari opsi sebelumnya
+    bs.innerHTML = '';
+    
+    if (o && s.value !== "") {
+        ['bbm1','bbm2','bbm3'].forEach(k => {
+            const v = o.dataset[k];
+            // KONDISI PENTING: Pastikan 'v' bukan tulisan "None" dan bukan kosong
+            if(v && v !== 'None' && v.trim() !== '') {
+                bs.innerHTML += `<option value="${v}">${v}</option>`;
+            }
+        });
+    }
+
+    if(keep && currentBBM && ![...bs.options].some(x => x.value === currentBBM)) {
+        bs.innerHTML += `<option value="${currentBBM}">${currentBBM}</option>`;
+    }
+    if(keep) bs.value = currentBBM;
+
+    // --- KODINGAN BATAS KAPASITAS ---
+    if(o) {
+        const maxBBM = o.dataset.kapasitas;
+        const inputBBM = document.querySelector('input[name="Jumlah_BBM"]');
+        if(maxBBM) {
+            inputBBM.max = maxBBM;
+            inputBBM.placeholder = `Maks: ${maxBBM} Liter`;
+        } else {
+            inputBBM.removeAttribute('max');
+            inputBBM.placeholder = 'cth: 40';
+        }
+    }
+}
+function previewFoto(input,id){const p=document.getElementById(id);if(input.files&&input.files[0]){const r=new FileReader();r.onload=e=>{p.src=e.target.result;p.style.display='block';};r.readAsDataURL(input.files[0]);}}
+window.addEventListener('load',()=>{hitungKM();isiJenisBBM(true);});
+// --- NEW BLOCK --- 
+// Auto-fill KM dari KM terakhir kendaraan (logika terpusat get_last_km via API).
+function isiKmKendaraan(){
+  const sel=document.getElementById('selKendaraan'),km=document.getElementById('kmKendaraan'),hint=document.getElementById('kmHint');
+  const id=sel.value;
+  if(!id){km.readOnly=true;return;}
+  hint.innerHTML='<i class="bi bi-arrow-repeat me-1"></i>Memuat KM terakhir...';
+  fetch(`/api/kendaraan/${id}/km-terakhir`).then(r=>r.json()).then(d=>{
+    const v=parseFloat(d.km_terakhir)||0;
+    if(v>0){km.value=v;km.readOnly=true;hint.innerHTML='<i class="bi bi-check-circle me-1 text-success"></i>Otomatis dari KM terakhir kendaraan';}
+    else{km.readOnly=false;hint.innerHTML='<i class="bi bi-pencil me-1"></i>Belum ada riwayat KM — isi manual';}
+  }).catch(()=>{km.readOnly=false;hint.innerHTML='<i class="bi bi-exclamation-triangle me-1 text-warning"></i>Gagal memuat — isi manual';});
+}
+function previewFoto(input,id){const p=document.getElementById(id);if(input.files&&input.files[0]){const r=new FileReader();r.onload=e=>{p.src=e.target.result;p.style.display='block';};r.readAsDataURL(input.files[0]);}}
+// --- NEW BLOCK --- 
+function hitungBaris(idArea, idCounter){const v=document.getElementById(idArea).value;document.getElementById(idCounter).textContent=v.split('\n').filter(l=>l.trim()!=='').length;}
+// Isi KM Kendaraan otomatis dari KM terakhir kendaraan (logika terpusat get_last_km via API).
+function isiKmKendaraan(){
+  const sel=document.getElementById('selKendaraan'),km=document.getElementById('kmKendaraan'),hint=document.getElementById('kmHint');
+  const id=sel.value;
+  if(!id){km.value='';km.readOnly=true;hint.innerHTML='<i class="bi bi-info-circle me-1"></i>Terisi otomatis dari KM terakhir';return;}
+  hint.innerHTML='<i class="bi bi-arrow-repeat me-1"></i>Memuat KM terakhir...';
+  fetch(`/api/kendaraan/${id}/km-terakhir`).then(r=>r.json()).then(d=>{
+    const v=parseFloat(d.km_terakhir)||0;
+    if(v>0){km.value=v;km.readOnly=true;hint.innerHTML='<i class="bi bi-check-circle me-1 text-success"></i>Otomatis dari KM terakhir kendaraan';}
+    else{km.value='';km.readOnly=false;hint.innerHTML='<i class="bi bi-pencil me-1"></i>Belum ada riwayat KM — isi manual';}
+  }).catch(()=>{km.readOnly=false;hint.innerHTML='<i class="bi bi-exclamation-triangle me-1 text-warning"></i>Gagal memuat — isi manual';});
+}
+function previewFoto(input,id){const p=document.getElementById(id);if(input.files&&input.files[0]){const r=new FileReader();r.onload=e=>{p.src=e.target.result;p.style.display='block';};r.readAsDataURL(input.files[0]);}}
+// Isi Tanggal otomatis dengan tanggal hari ini (tetap bisa diubah Admin/Driver).
+window.addEventListener('load',()=>{const t=document.querySelector('[name=Tanggal]');if(t&&!t.value)t.value=new Date().toISOString().split('T')[0];});
+// --- NEW BLOCK --- 
+function hitungKM(){const a=parseFloat(document.getElementById('kmAwal').value)||0,b=parseFloat(document.getElementById('kmAkhir').value)||0;document.getElementById('hasilKM').textContent=(b>a?(b-a).toFixed(1):0)+' km';}
+function previewFoto(input,id){const p=document.getElementById(id);if(input.files&&input.files[0]){const r=new FileReader();r.onload=e=>{p.src=e.target.result;p.style.display='block';};r.readAsDataURL(input.files[0]);}}
+hitungKM();
+// --- NEW BLOCK --- 
+const labelsBBM = {{ stats.grafik_label|safe }};
+const dataBBM   = {{ stats.grafik_data|safe }};
+new Chart(document.getElementById('chartBBM'), {
+    type: 'bar',
+    data: { labels: labelsBBM, datasets: [{ data: dataBBM,
+        backgroundColor: labelsBBM.map((_, i) => i === labelsBBM.length - 1 ? '#1a472a' : '#a8d5b5'),
+        borderRadius: 6, borderSkipped: false }] },
+    options: { responsive: true, plugins: { legend: { display: false } },
+        scales: { y: { grid: { color: '#f0f0f0' }, ticks: { font: { size: 11 } } }, x: { grid: { display: false }, ticks: { font: { size: 11 } } } } }
+});
+{% set chart_labels = [] %}
+{% set chart_data = [] %}
+{% for label, count in stats.klaster_data | dictsort %}
+    {% set _ = chart_labels.append(label) %}
+    {% set _ = chart_data.append(count) %}
+{% endfor %}
+
+const klasterLabels = {{ chart_labels | tojson }};
+const klasterData = {{ chart_data | tojson }};
+const klasterColors = ['#27ae60','#f39c12','#e74c3c','#3498db','#9b59b6'];
+
+const totalKlaster = klasterData.reduce((a,b)=>a+b, 0);
+new Chart(document.getElementById('chartKlaster'), {
+    type: 'doughnut',
+    data: { labels: klasterLabels, datasets: [{ data: klasterData.map(v => v || 0.01),
+        backgroundColor: klasterColors, borderWidth: 0, hoverOffset: 4 }] },
+    options: { cutout: '68%', responsive: true, plugins: { legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${klasterData[ctx.dataIndex]} unit` } } } },
+    plugins: [{ id: 'centerText', beforeDraw(chart) {
+        const { ctx, chartArea: { top, left, width, height } } = chart; ctx.save();
+        ctx.font = 'bold 18px Segoe UI'; ctx.fillStyle = '#1f2933'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(totalKlaster, left + width/2, top + height/2 - 8);
+        ctx.font = '11px Segoe UI'; ctx.fillStyle = '#888'; ctx.fillText('unit', left + width/2, top + height/2 + 10); ctx.restore();
+    } }]
+});
+function filterTable() {
+    const filter = document.getElementById('filterKlaster').value;
+    document.querySelectorAll('#tabelKendaraan tbody tr').forEach(row => {
+        row.style.display = (!filter || row.dataset.klaster === filter) ? '' : 'none';
+    });
+}
+// --- NEW BLOCK --- 
+// Isi KM Kendaraan otomatis dari KM terakhir kendaraan (logika terpusat get_last_km via API).
+function isiKmKendaraan(){
+  const sel=document.getElementById('selKendaraan'),km=document.getElementById('kmKendaraan'),hint=document.getElementById('kmHint');
+  const id=sel.value;
+  if(!id){km.value='';km.readOnly=true;hint.innerHTML='<i class="bi bi-info-circle me-1"></i>Terisi otomatis dari KM terakhir';return;}
+  hint.innerHTML='<i class="bi bi-arrow-repeat me-1"></i>Memuat KM terakhir...';
+  fetch(`/api/kendaraan/${id}/km-terakhir`).then(r=>r.json()).then(d=>{
+    const v=parseFloat(d.km_terakhir)||0;
+    if(v>0){km.value=v;km.readOnly=true;hint.innerHTML='<i class="bi bi-check-circle me-1 text-success"></i>Otomatis dari KM terakhir kendaraan';}
+    else{km.value='';km.readOnly=false;hint.innerHTML='<i class="bi bi-pencil me-1"></i>Belum ada riwayat KM — isi manual';}
+  }).catch(()=>{km.readOnly=false;hint.innerHTML='<i class="bi bi-exclamation-triangle me-1 text-warning"></i>Gagal memuat — isi manual';});
+}
+function previewFoto(input,id){const p=document.getElementById(id);if(input.files&&input.files[0]){const r=new FileReader();r.onload=e=>{p.src=e.target.result;p.style.display='block';};r.readAsDataURL(input.files[0]);}}
+// Isi Tanggal otomatis dengan tanggal hari ini (tetap bisa diubah Admin/Driver).
+window.addEventListener('load',()=>{const t=document.querySelector('[name=Tanggal]');if(t&&!t.value)t.value=new Date().toISOString().split('T')[0];});
+// --- NEW BLOCK --- 
+function hitungKM(){const a=parseFloat(document.getElementById('kmAwal').value)||0,b=parseFloat(document.getElementById('kmAkhir').value)||0;document.getElementById('hasilKM').textContent=(b>a?(b-a).toFixed(1):0)+' km';}
+// Isi KM Awal otomatis dari KM terakhir kendaraan (logika terpusat get_last_km via API).
+function isiKmAwal(){
+  const sel=document.getElementById('selKendaraan'),kmAwal=document.getElementById('kmAwal'),hint=document.getElementById('kmAwalHint');
+  const id=sel.value;
+  if(!id){kmAwal.value='';kmAwal.readOnly=true;hint.innerHTML='<i class="bi bi-info-circle me-1"></i>Pilih kendaraan dulu — terisi otomatis';hitungKM();return;}
+  hint.innerHTML='<i class="bi bi-arrow-repeat me-1"></i>Memuat KM terakhir...';
+  fetch(`/api/kendaraan/${id}/km-terakhir`).then(r=>r.json()).then(d=>{
+    const km=parseFloat(d.km_terakhir)||0;
+    if(km>0){kmAwal.value=km;kmAwal.readOnly=true;hint.innerHTML='<i class="bi bi-check-circle me-1 text-success"></i>Otomatis dari KM terakhir kendaraan';}
+    else{kmAwal.value='';kmAwal.readOnly=false;hint.innerHTML='<i class="bi bi-pencil me-1"></i>Belum ada riwayat KM — isi KM awal kendaraan';}
+    hitungKM();
+  }).catch(()=>{kmAwal.readOnly=false;hint.innerHTML='<i class="bi bi-exclamation-triangle me-1 text-warning"></i>Gagal memuat — isi KM awal manual';});
+}
+function previewFoto(input,id){const p=document.getElementById(id);if(input.files&&input.files[0]){const r=new FileReader();r.onload=e=>{p.src=e.target.result;p.style.display='block';};r.readAsDataURL(input.files[0]);}}
+window.addEventListener('load',()=>{const n=new Date();document.querySelector('[name=Tanggal]').value=n.toISOString().split('T')[0];document.querySelector('[name=Jam]').value=n.toTimeString().slice(0,5);});
+// --- NEW BLOCK --- 
+const scatterRaw = {{ scatter_data|safe }};
+const datasets = [];
+// Generate colors dynamically since categories are not fixed
+const colors = ['#27ae60', '#f39c12', '#e74c3c', '#2980b9', '#8e44ad', '#16a085', '#d35400', '#2c3e50'];
+let colorIndex = 0;
+
+for (const [kat, titik] of Object.entries(scatterRaw)) {
+    if (titik.length === 0) continue;
+    const color = colors[colorIndex % colors.length];
+    datasets.push({ label: kat, data: titik.map(t => ({x: t.x, y: t.y, label: t.label})), backgroundColor: color + 'cc', borderColor: color, pointRadius: 8, pointHoverRadius: 10 });
+    colorIndex++;
+}
+
+new Chart(document.getElementById('chartScatter'), {
+    type: 'scatter',
+    data: { datasets },
+    options: { responsive: true,
+        plugins: { legend: { position: 'top', labels: { font: { size: 11 } } }, tooltip: { callbacks: { label: ctx => ` ${ctx.raw.label}: Jarak=${ctx.raw.x.toFixed(0)} km, Rasio=${ctx.raw.y.toFixed(4)}` } } },
+        scales: { x: { title: { display: true, text: 'Total Jarak (km)' } }, y: { title: { display: true, text: 'Rasio Konsumsi (L/km)' } } } }
+});
+// --- NEW BLOCK --- 
+new Chart(document.getElementById('chartKendMaint'), {
+    type: 'bar',
+    data: { labels: {{ grafik_label|safe }}, datasets: [{ label: 'Jumlah Maintenance', data: {{ grafik_data|safe }}, backgroundColor: '#f0b8a8', borderRadius: 6, borderSkipped: false }] },
+    options: { indexAxis: 'y', responsive: true, plugins: { legend: { display: false } },
+        scales: { x: { grid: { color: '#f0f0f0' }, ticks: { precision: 0 } }, y: { grid: { display: false } } } }
+});
+new Chart(document.getElementById('chartTrenMaint'), {
+    type: 'bar',
+    data: { labels: {{ tren_label|safe }}, datasets: [{ label: 'Maintenance', data: {{ tren_data|safe }}, backgroundColor: '#a8c5d5', borderRadius: 6, borderSkipped: false }] },
+    options: { responsive: true, plugins: { legend: { display: false } },
+        scales: { x: { grid: { display: false } }, y: { grid: { color: '#f0f0f0' }, ticks: { precision: 0 } } } }
+});
+// --- NEW BLOCK --- 
+const labelsKend = {{ grafik_label|safe }};
+const dataKend   = {{ grafik_data|safe }};
+new Chart(document.getElementById('chartBBMKend'), {
+    type: 'bar',
+    data: { labels: labelsKend, datasets: [{ label: 'Total BBM (L)', data: dataKend, backgroundColor: '#a8d5b5', borderRadius: 6, borderSkipped: false }] },
+    options: { indexAxis: 'y', responsive: true, plugins: { legend: { display: false } },
+        scales: { x: { grid: { color: '#f0f0f0' } }, y: { grid: { display: false } } } }
+});

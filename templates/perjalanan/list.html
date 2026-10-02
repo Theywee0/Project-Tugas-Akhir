@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import status_badge, tombol_verifikasi %}
+{% block title %}Data Perjalanan{% endblock %}
+{% block page_title %}Data Perjalanan{% endblock %}
+{% block topbar_icon %}bi bi-map-fill{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <p class="subtitle mb-0">{% if session['role']=='driver' %}Riwayat perjalanan kendaraan yang Anda gunakan.{% else %}Seluruh data perjalanan kendaraan operasional.{% endif %}</p>
+    {% if session['role'] == 'driver' %}
+    <a href="{{ url_for('perjalanan.tambah_perjalanan') }}" class="btn btn-success"><i class="bi bi-plus-lg me-1"></i>Tambah Perjalanan</a>
+    {% endif %}
+</div>
+
+<div class="app-card p-0">
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead><tr><th class="ps-3">No</th><th>Tanggal</th><th>Driver</th><th>Kendaraan</th><th>Asal &rarr; Tujuan</th><th>KM Tempuh</th><th>Status</th><th class="text-end pe-4">Aksi</th></tr></thead>
+            <tbody>
+            {% if data %}
+                {% for p in data %}
+                <tr>
+                    <td class="ps-3">{{ loop.index }}</td>
+                    <td>{{ p[1] }}<br><small class="text-muted">{{ p[2] }}</small></td>
+                    <td>{{ p[13] or '-' }}</td>
+                    <td>{{ p[14] or '-' }}</td>
+                    <td><span class="badge bg-light text-dark border">{{ p[15] or '-' }}</span> <i class="bi bi-arrow-right mx-1 text-muted"></i> <span class="badge bg-light text-dark border">{{ p[16] or '-' }}</span></td>
+                    <td><strong>{{ p[7] }} km</strong></td>
+                    <td>{{ status_badge(p[17]) }}</td>
+                    <td class="text-end pe-4">
+                        <a href="{{ url_for('perjalanan.detail_perjalanan', id=p[0]) }}" class="btn btn-info btn-sm btn-icon" title="Detail"><i class="bi bi-eye"></i></a>
+                        {% if session['role']=='kepala_operasional_gs' or p[17]=='Belum' %}
+                        <a href="{{ url_for('perjalanan.edit_perjalanan', id=p[0]) }}" class="btn btn-warning btn-sm btn-icon" title="Edit"><i class="bi bi-pencil"></i></a>
+                        {% endif %}
+                        {% if session['role']=='kepala_operasional_gs' %}
+                        {{ tombol_verifikasi(p[17], 'perjalanan.verifikasi_perjalanan', 'perjalanan.batal_verifikasi_perjalanan', p[0]) }}
+                        <a href="{{ url_for('perjalanan.hapus_perjalanan', id=p[0]) }}" class="btn btn-danger btn-sm btn-icon" title="Hapus" onclick="return confirm('Yakin hapus data ini?')"><i class="bi bi-trash"></i></a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr><td colspan="8"><div class="empty-state"><i class="bi bi-inbox"></i>Belum ada data perjalanan.</div></td></tr>
+            {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

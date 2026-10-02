@@ -1,0 +1,303 @@
+{% extends 'base.html' %}
+{% block title %}Laporan Maintenance{% endblock %}
+{% block page_title %}Laporan Maintenance{% endblock %}
+{% block topbar_icon %}bi bi-tools{% endblock %}
+{% block head_extra %}
+<script src="{{ url_for('static', filename='vendor/chart/chart.umd.min.js') }}"></script>
+{% endblock %}
+
+{% block content %}
+<!-- STATISTIK RINGKASAN (4 Kartu Horizontal) -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-center gap-3">
+                <div style="width:44px;height:44px;border-radius:12px;background:#e8f4eb;display:flex;align-items:center;justify-content:center;">
+                    <i class="bi bi-wrench text-success" style="font-size:1.3rem;"></i>
+                </div>
+                <div>
+                    <div class="label text-muted">Total Maintenance</div>
+                    <div class="value">{{ "{:,}".format(total[0]|int) if total else 0 }} <small class="fs-6 text-muted fw-normal">kali</small></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-center gap-3">
+                <div style="width:44px;height:44px;border-radius:12px;background:#e8f4eb;display:flex;align-items:center;justify-content:center;">
+                    <i class="bi bi-car-front text-success" style="font-size:1.3rem;"></i>
+                </div>
+                <div>
+                    <div class="label text-muted">Kendaraan Dirawat</div>
+                    <div class="value">{{ "{:,}".format(total[1]|int) if total else 0 }} <small class="fs-6 text-muted fw-normal">unit</small></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-center gap-3">
+                <div style="width:44px;height:44px;border-radius:12px;background:#e8f4eb;display:flex;align-items:center;justify-content:center;">
+                    <i class="bi bi-megaphone text-success" style="font-size:1.3rem;"></i>
+                </div>
+                <div>
+                    <div class="label text-muted">Total Keluhan</div>
+                    <div class="value">{{ "{:,.0f}".format(total[2]|float if total else 0) }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-center gap-3">
+                <div style="width:44px;height:44px;border-radius:12px;background:#e8f4eb;display:flex;align-items:center;justify-content:center;">
+                    <i class="bi bi-box-seam text-success" style="font-size:1.3rem;"></i>
+                </div>
+                <div>
+                    <div class="label text-muted">Total Sparepart</div>
+                    <div class="value">{{ "{:,.0f}".format(total[3]|float if total else 0) }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- FILTER BAR -->
+<div class="d-flex flex-wrap align-items-center gap-2 mb-4">
+    <form method="GET" class="d-flex align-items-center gap-2 m-0">
+        <select name="bulan" class="form-select form-select-sm" style="width:130px;">
+            <option value="">Semua Bulan</option>
+            {% for i, bln in [(1,'Januari'),(2,'Februari'),(3,'Maret'),(4,'April'),(5,'Mei'),(6,'Juni'),(7,'Juli'),(8,'Agustus'),(9,'September'),(10,'Oktober'),(11,'November'),(12,'Desember')] %}
+            <option value="{{ i }}" {% if bulan==i|string %}selected{% endif %}>{{ bln }}</option>
+            {% endfor %}
+        </select>
+        <select name="tahun" class="form-select form-select-sm" style="width:125px;">
+            <option value="">Semua Tahun</option>
+            {% for y in range(2023, 2028) %}
+            <option value="{{ y }}" {% if tahun==y|string %}selected{% endif %}>{{ y }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-success btn-sm px-3 ms-2"><i class="bi bi-search me-1"></i>Filter</button>
+        <a href="{{ url_for('laporan.laporan_maintenance') }}" class="btn btn-outline-secondary btn-sm px-3 bg-white">Reset</a>
+    </form>
+</div>
+
+<!-- CHARTS -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-6">
+        <div class="app-card h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <p class="card-title fw-bold mb-0">Top Kendaraan Paling Sering Dirawat</p>
+                <span class="text-muted small">JML Maintenance</span>
+            </div>
+            <div style="height:250px;">
+                <canvas id="chartKendMaint"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="app-card h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <p class="card-title fw-bold mb-0"><i class="bi bi-graph-up me-2"></i>Tren Maintenance Bulanan</p>
+                <span class="text-muted small">Total Keluhan</span>
+            </div>
+            <div style="height:250px;">
+                <canvas id="chartTrenMaint"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- TABEL DETAIL MAINTENANCE -->
+<div class="app-card p-0 mb-4">
+    <div class="d-flex justify-content-between align-items-center px-4 pt-3 pb-2 border-bottom">
+        <p class="card-title fw-bold mb-0"><i class="bi bi-table me-2"></i>Detail Histori Maintenance</p>
+        <div class="d-flex align-items-center gap-3">
+            <input type="text" id="searchInput" class="form-control form-control-sm" placeholder="Cari Nopol atau Driver..." style="width:220px;" onkeyup="searchDetail()">
+            <span class="text-muted" style="font-size:.82rem;">{{ data|length }} data</span>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table align-middle mb-0" id="tableDetail">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-4" style="width:50px;">NO</th>
+                    <th>TANGGAL</th>
+                    <th>DRIVER</th>
+                    <th>KENDARAAN</th>
+                    <th>KM</th>
+                    <th>LOKASI</th>
+                    <th>KELUHAN</th>
+                    <th class="text-center">∑ KELUHAN</th>
+                    <th class="text-center">∑ SPAREPART</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% if data %}{% for m in data %}
+                <tr class="detail-row border-bottom" {% if loop.index > 10 %}style="display: none;"{% endif %}>
+                    <td class="ps-4 row-num"></td>
+                    <td><strong>{{ m[1].strftime('%Y-%m-%d') if m[1] else '-' }}</strong></td>
+                    <td class="text-muted">{{ m[2] or '-' }}</td>
+                    <td><strong>{{ m[3] }}</strong><br><small class="text-muted">{{ m[4] }} {{ m[5] }}</small></td>
+                    <td>{{ "{:,.0f}".format(m[6]|float) if m[6] else '-' }}</td>
+                    <td><small>{{ m[7] or '-' }}</small></td>
+                    <td style="max-width:300px;"><small>{{ m[8] or '-' }}</small></td>
+                    <td class="text-center"><span class="badge bg-warning text-dark rounded-pill px-3">{{ m[9] or 0 }}</span></td>
+                    <td class="text-center"><span class="badge bg-info text-dark rounded-pill px-3">{{ m[11] or 0 }}</span></td>
+                </tr>
+            {% endfor %}{% else %}
+                <tr><td colspan="9"><div class="empty-state"><i class="bi bi-inbox"></i>Belum ada data maintenance.</div></td></tr>
+            {% endif %}
+            </tbody>
+        </table>
+    </div>
+    <!-- Pagination for Detail Maintenance -->
+    <div class="d-flex justify-content-between align-items-center px-4 py-3 border-top">
+        <div class="text-muted small" id="pageInfoDetail">Menampilkan 0 data</div>
+        <ul class="pagination pagination-sm mb-0" id="paginationULDetail"></ul>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// CHARTS
+Chart.defaults.font.size = 11;
+new Chart(document.getElementById('chartKendMaint'), {
+    type: 'bar',
+    data: { 
+        labels: {{ grafik_label|safe }}, 
+        datasets: [{ 
+            data: {{ grafik_data|safe }}, 
+            backgroundColor: '#f1948a', 
+            borderRadius: 3, 
+            barThickness: 12 
+        }] 
+    },
+    options: { 
+        indexAxis: 'y', 
+        responsive: true, 
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { 
+            x: { grid: { color: '#f0f0f0' }, ticks: { precision: 0 } }, 
+            y: { grid: { display: false } } 
+        } 
+    }
+});
+new Chart(document.getElementById('chartTrenMaint'), {
+    type: 'bar',
+    data: { 
+        labels: {{ tren_label|safe }}, 
+        datasets: [{ 
+            data: {{ tren_data|safe }}, 
+            backgroundColor: '#85c1e9', 
+            borderRadius: 3, 
+            barThickness: 20 
+        }] 
+    },
+    options: { 
+        responsive: true, 
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { 
+            x: { grid: { display: false } }, 
+            y: { grid: { color: '#f0f0f0' }, ticks: { precision: 0 } } 
+        } 
+    }
+});
+
+// PAGINATION: Detail Maintenance
+document.addEventListener('DOMContentLoaded', function() {
+    initDetailPagination();
+});
+
+let detailPage = 1;
+const detailRowsPerPage = 10;
+let detailFilteredRows = [];
+
+function initDetailPagination() {
+    const tbody = document.getElementById('tableDetail').querySelector('tbody');
+    if (!tbody) return;
+    const allRows = Array.from(tbody.querySelectorAll('tr.detail-row'));
+    if (allRows.length === 0) return;
+    window.allDetailRows = allRows;
+    detailFilteredRows = allRows;
+    detailFilteredRows.forEach((row, i) => { row.querySelector('.row-num').textContent = i + 1; });
+    renderDetailPage();
+    renderDetailPagination();
+}
+
+window.searchDetail = function() {
+    const query = document.getElementById('searchInput').value.toLowerCase();
+    if (!window.allDetailRows) return;
+    detailFilteredRows = window.allDetailRows.filter(row => row.textContent.toLowerCase().includes(query));
+    detailFilteredRows.forEach((row, i) => { row.querySelector('.row-num').textContent = i + 1; });
+    window.allDetailRows.forEach(r => r.style.display = 'none');
+    detailPage = 1;
+    renderDetailPage();
+    renderDetailPagination();
+};
+
+function renderDetailPage() {
+    if (window.allDetailRows) window.allDetailRows.forEach(r => r.style.display = 'none');
+    const start = (detailPage - 1) * detailRowsPerPage;
+    const end = start + detailRowsPerPage;
+    detailFilteredRows.slice(start, end).forEach(r => r.style.display = '');
+    const info = document.getElementById('pageInfoDetail');
+    if (info) {
+        if (detailFilteredRows.length === 0) {
+            info.textContent = 'Tidak ada data ditemukan.';
+        } else {
+            info.textContent = `Menampilkan ${start + 1} - ${Math.min(end, detailFilteredRows.length)} dari ${detailFilteredRows.length} data`;
+        }
+    }
+}
+
+function renderDetailPagination() {
+    const ul = document.getElementById('paginationULDetail');
+    if (!ul) return;
+    ul.innerHTML = '';
+    const totalPages = Math.ceil(detailFilteredRows.length / detailRowsPerPage);
+    if (totalPages <= 1) return;
+
+    function addPage(label, page, isActive, isDisabled) {
+        const li = document.createElement('li');
+        li.className = `page-item ${isActive ? 'active' : ''} ${isDisabled ? 'disabled' : ''}`;
+        li.innerHTML = `<a class="page-link" href="#" onclick="changeDetailPage(${page}); return false;">${label}</a>`;
+        ul.appendChild(li);
+    }
+    function addEllipsis() {
+        const li = document.createElement('li');
+        li.className = 'page-item disabled';
+        li.innerHTML = '<span class="page-link">…</span>';
+        ul.appendChild(li);
+    }
+
+    addPage('«', detailPage - 1, false, detailPage === 1);
+    const neighbors = 1;
+    const pages = new Set([1, totalPages]);
+    for (let i = detailPage - neighbors; i <= detailPage + neighbors; i++) {
+        if (i >= 1 && i <= totalPages) pages.add(i);
+    }
+    const sorted = Array.from(pages).sort((a, b) => a - b);
+    let prev = 0;
+    for (const p of sorted) {
+        if (p - prev > 1) addEllipsis();
+        addPage(p, p, p === detailPage, false);
+        prev = p;
+    }
+    addPage('»', detailPage + 1, false, detailPage === totalPages);
+}
+
+window.changeDetailPage = function(page) {
+    const totalPages = Math.ceil(detailFilteredRows.length / detailRowsPerPage);
+    if (page >= 1 && page <= totalPages) {
+        detailPage = page;
+        renderDetailPage();
+        renderDetailPagination();
+    }
+};
+</script>
+{% endblock %}

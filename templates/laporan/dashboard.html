@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block topbar_icon %}bi bi-speedometer2{% endblock %}
+
+{% block head_extra %}
+<script src="{{ url_for('static', filename='vendor/chart/chart.umd.min.js') }}"></script>
+
+{% endblock %}
+
+{% block content %}
+<!-- DATA MENUNGGU VERIFIKASI -->
+{% if stats.pending.total > 0 %}
+<div class="app-card mb-4" style="border-left:4px solid #f39c12;">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <div>
+            <p class="card-title mb-1"><i class="bi bi-hourglass-split text-warning"></i> {{ stats.pending.total }} Data Menunggu Verifikasi</p>
+            <small class="text-muted">Tinjau dan verifikasi data operasional yang diinput driver.</small>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            {% if stats.pending.perjalanan %}<a href="{{ url_for('perjalanan.list_perjalanan') }}" class="btn btn-sm btn-outline-secondary">Perjalanan <span class="badge bg-warning text-dark ms-1">{{ stats.pending.perjalanan }}</span></a>{% endif %}
+            {% if stats.pending.bbm %}<a href="{{ url_for('bbm.list_bbm') }}" class="btn btn-sm btn-outline-secondary">BBM <span class="badge bg-warning text-dark ms-1">{{ stats.pending.bbm }}</span></a>{% endif %}
+            {% if stats.pending.maintenance %}<a href="{{ url_for('maintenance.list_maintenance') }}" class="btn btn-sm btn-outline-secondary">Maintenance <span class="badge bg-warning text-dark ms-1">{{ stats.pending.maintenance }}</span></a>{% endif %}
+            {% if stats.pending.inspeksi %}<a href="{{ url_for('inspeksi.list_inspeksi') }}" class="btn btn-sm btn-outline-secondary">Inspeksi <span class="badge bg-warning text-dark ms-1">{{ stats.pending.inspeksi }}</span></a>{% endif %}
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="app-card mb-4 d-flex align-items-center gap-2" style="border-left:4px solid #27ae60;">
+    <i class="bi bi-patch-check-fill text-success"></i><span class="text-muted" style="font-size:.9rem;">Semua data operasional sudah terverifikasi.</span>
+</div>
+{% endif %}
+
+<!-- HEADING + PERIODE -->
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <h6 class="fw-bold mb-0"><i class="bi bi-bar-chart-line-fill text-success me-2"></i>Ringkasan Operasional</h6>
+    <span class="text-muted" style="font-size:.85rem;"><i class="bi bi-calendar3 me-1"></i>Data Operasional: <strong>{{ stats.periode_label }}</strong></span>
+</div>
+
+<!-- STAT CARDS -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="label">Total Kendaraan</div>
+            <div class="value">{{ stats.total_kendaraan }}</div>
+            <div class="change neutral"><i class="bi bi-diagram-3 me-1"></i>{% if stats.ada_clustering %}{{ stats.kendaraan_dianalisis }} unit telah dianalisis K-Means{% else %}Belum ada analisis clustering{% endif %}</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="label">Total BBM (Bulan Ini)</div>
+            <div class="value">{{ "{:,.0f}".format(stats.total_bbm_bulan) }} L</div>
+            <div class="change {% if stats.pct_bbm > 0 %}down{% elif stats.pct_bbm < 0 %}up{% else %}neutral{% endif %}">
+                {% if stats.pct_bbm > 0 %}<i class="bi bi-arrow-up-short"></i>{% elif stats.pct_bbm < 0 %}<i class="bi bi-arrow-down-short"></i>{% endif %}
+                {{ stats.pct_bbm|abs }}% vs bulan lalu{% if stats.pct_bbm > 0 %} (lebih boros){% elif stats.pct_bbm < 0 %} (lebih hemat){% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="label">Total Jarak (Bulan Ini)</div>
+            <div class="value">{{ "{:,.0f}".format(stats.total_jarak_bulan) }} km</div>
+            <div class="change {% if stats.pct_jarak >= 0 %}up{% else %}down{% endif %}">
+                {% if stats.pct_jarak >= 0 %}<i class="bi bi-arrow-up-short"></i>{% else %}<i class="bi bi-arrow-down-short"></i>{% endif %}
+                {{ stats.pct_jarak|abs }}% vs bulan lalu
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="label">Rata-rata Rasio</div>
+            <div class="value">{{ stats.rata_rasio }} <small class="fs-6 text-muted">L/km</small></div>
+            <div class="change neutral"><i class="bi bi-graph-up me-1"></i>Berdasarkan data yang digunakan pada analisis terakhir</div>
+        </div>
+    </div>
+</div>
+
+<!-- SOROT KENDARAAN KERUSAKAN BERAT -->
+{% set berat = [] %}
+{% for k in stats.tabel_kendaraan %}{% if k[6] == 'Kerusakan Berat' %}{% set _ = berat.append(k) %}{% endif %}{% endfor %}
+{% if berat %}
+<div class="app-card mb-4" style="border-left:4px solid #e74c3c;">
+    <p class="card-title mb-1"><i class="bi bi-exclamation-triangle-fill text-danger"></i> {{ berat|length }} Kendaraan Terindikasi Kerusakan Berat</p>
+    <small class="text-muted">Perlu prioritas pemeriksaan &amp; perawatan berdasarkan hasil analisis K-Means:</small>
+    <div class="mt-2 d-flex flex-wrap gap-2">
+        {% for k in berat %}<span class="badge bg-danger">{{ k[0] }} — {{ k[1] }} {{ k[2] }}</span>{% endfor %}
+    </div>
+    <!-- <a href="{{ url_for('clustering.index_clustering') }}" class="small text-decoration-none mt-2 d-inline-block" style="color:var(--accent);">Lihat analisis clustering <i class="bi bi-arrow-right"></i></a> -->
+</div>
+{% endif %}
+
+<!-- GRAFIK + KLASTER -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-7">
+        <div class="app-card h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <p class="card-title mb-0"><i class="bi bi-bar-chart-fill"></i> Konsumsi BBM per Bulan (Liter)</p>
+                <a href="{{ url_for('laporan.laporan_bbm') }}" class="small text-decoration-none" style="color:var(--accent);">Lihat semua</a>
+            </div>
+            <canvas id="chartBBM" height="110"></canvas>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="app-card h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <p class="card-title mb-0"><i class="bi bi-pie-chart-fill"></i> Distribusi Kondisi Kendaraan</p>
+                <a href="{{ url_for('clustering.index_clustering') }}" class="small text-decoration-none" style="color:var(--accent);">Jalankan analisis</a>
+            </div>
+            <small class="text-muted d-block mb-2" style="font-size:.74rem;">
+                {% if stats.ada_clustering %}<i class="bi bi-info-circle me-1"></i>Berdasarkan analisis K-Means yang terakhir dijalankan.{% else %}<i class="bi bi-info-circle me-1"></i>Belum ada analisis clustering — jalankan analisis untuk melihat distribusi.{% endif %}
+            </small>
+            <div class="d-flex align-items-center gap-2">
+                <div style="width:130px;flex-shrink:0;"><canvas id="chartKlaster"></canvas></div>
+                <div class="klaster-legend flex-fill">
+                    {% set total_k = stats.klaster_data.values() | sum %}
+                    {% set color_palette = ['#27ae60','#f39c12','#e74c3c','#3498db','#9b59b6'] %}
+                    {% for label, count in stats.klaster_data | dictsort %}
+                    {% set color = color_palette[loop.index0 % color_palette|length] %}
+                    <div class="klaster-item">
+                        <div class="d-flex align-items-center gap-2 klaster-name"><div class="klaster-dot" style="background:{{ color }};"></div><span>{{ label }}</span></div>
+                        <div class="klaster-bar-wrap"><div class="klaster-bar" style="background:{{ color }};width:{% if total_k > 0 %}{{ (count/total_k*100)|round|int }}{% else %}0{% endif %}%;"></div></div>
+                        <div class="klaster-count">{{ count }}</div>
+                    </div>
+                    {% endfor %}
+                    <div class="mt-2 text-center"><small class="text-muted">Total: <strong>{{ total_k }} unit</strong></small></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- TABEL KENDARAAN -->
+<div class="app-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <p class="card-title mb-0"><i class="bi bi-card-list"></i> Data Kendaraan & Status Kondisi</p>
+        <select class="filter-select" id="filterKlaster" onchange="filterTable()">
+            <option value="">Semua Kondisi</option>
+            {% for label, count in stats.klaster_data | dictsort %}
+            <option value="{{ label }}">{{ label }}</option>
+            {% endfor %}
+            <option value="Belum Dianalisis">Belum Dianalisis</option>
+        </select>
+    </div>
+    <div class="table-responsive">
+        <table class="table" id="tabelKendaraan">
+            <thead><tr><th>No. Polisi</th><th>Merk / Tipe</th><th>Total Jarak</th><th>Total BBM</th><th>Rasio (L/km)</th><th>Kondisi</th></tr></thead>
+            <tbody>
+                {% if stats.tabel_kendaraan %}
+                    {% for k in stats.tabel_kendaraan %}
+                    <tr data-klaster="{{ k[6] }}">
+                        <td><strong>{{ k[0] }}</strong></td>
+                        <td>{{ k[1] }} {{ k[2] }}</td>
+                        <td>{{ "{:,.0f}".format(k[3]) }} km</td>
+                        <td>{{ "{:,.0f}".format(k[4]) }} L</td>
+                        <td>{{ "%.3f"|format(k[5]) }}</td>
+                        <td>
+                            {% if k[6] == 'Normal' %}<span class="badge-soft badge-normal">Normal</span>
+                            {% elif k[6] == 'Kerusakan Ringan' %}<span class="badge-soft badge-ringan">Kerusakan Ringan</span>
+                            {% elif k[6] == 'Kerusakan Berat' %}<span class="badge-soft badge-berat">Kerusakan Berat</span>
+                            {% elif k[6] == 'Belum Dianalisis' %}<span class="badge-soft badge-belum">Belum Dianalisis</span>
+                            {% else %}<span class="badge-soft bg-light text-dark border">{{ k[6] }}</span>{% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr><td colspan="6" class="empty-state"><i class="bi bi-inbox"></i>Belum ada data kendaraan.</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% set chart_labels = [] %}
+{% set chart_data = [] %}
+{% for label, count in stats.klaster_data | dictsort %}
+    {% set _ = chart_labels.append(label) %}
+    {% set _ = chart_data.append(count) %}
+{% endfor %}
+<script>
+    window.dashboardChartData = {
+        labelsBBM: {{ stats.grafik_label|safe }},
+        dataBBM: {{ stats.grafik_data|safe }},
+        klasterLabels: {{ chart_labels | tojson }},
+        klasterData: {{ chart_data | tojson }}
+    };
+</script>
+<script src="{{ url_for('static', filename='js/charts.js') }}" defer></script>
+{% endblock %}

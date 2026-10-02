@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block title %}Edit Perjalanan{% endblock %}
+{% block page_title %}Edit Perjalanan{% endblock %}
+{% block topbar_icon %}bi bi-pencil-square{% endblock %}
+{% block head_extra %}
+
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <p class="subtitle mb-0">Perbarui data perjalanan.</p>
+    <a href="{{ url_for('perjalanan.list_perjalanan') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Kembali</a>
+</div>
+<div class="app-card">
+    <form method="POST" enctype="multipart/form-data">
+        <p class="section-title"><i class="bi bi-calendar me-2"></i>Waktu & Petugas</p>
+        <div class="row g-3 mb-4">
+            <div class="col-md-3"><label class="form-label">Tanggal <span class="req">*</span></label><input type="date" name="Tanggal" class="form-control" value="{{ tanggal }}" required></div>
+            <div class="col-md-3"><label class="form-label">Jam <span class="req">*</span></label><input type="time" name="Jam" class="form-control" value="{{ jam }}" required></div>
+            {% if session['role'] == 'kepala_operasional_gs' %}
+            <div class="col-md-3"><label class="form-label">Driver <span class="req">*</span></label>
+                <select name="ID_Driver" class="form-select" required><option value="">-- Pilih Driver --</option>{% for d in drivers %}<option value="{{ d[0] }}" {% if d[0]==p[3] %}selected{% endif %}>{{ d[1] }}</option>{% endfor %}</select>
+            </div>
+            {% endif %}
+            <div class="col-md-3"><label class="form-label">Kendaraan <span class="req">*</span></label>
+                <select name="ID_Kendaraan" class="form-select select2-searchable" data-search-placeholder="Cari plat atau merek kendaraan..." required><option value="">-- Pilih Kendaraan --</option>{% for k in kendaraans %}<option value="{{ k[0] }}" {% if k[0]==p[4] %}selected{% endif %}>{{ k[1] }} - {{ k[2] }} {{ k[3] }}</option>{% endfor %}</select>
+            </div>
+        </div>
+
+        <p class="section-title"><i class="bi bi-speedometer me-2"></i>Data Kilometer</p>
+        <div class="row g-3 mb-4">
+            <div class="col-md-3"><label class="form-label">KM Awal <span class="req">*</span></label><input type="number" name="KM_Awal" id="kmAwal" class="form-control" step="0.1" min="0" value="{{ p[5] }}" required oninput="hitungKM()"></div>
+            <div class="col-md-3"><label class="form-label">KM Akhir <span class="req">*</span></label><input type="number" name="KM_Akhir" id="kmAkhir" class="form-control" step="0.1" min="0" value="{{ p[6] }}" required oninput="hitungKM()"></div>
+            <div class="col-md-3 d-flex align-items-end"><div class="w-100"><label class="form-label">Total Jarak Tempuh</label><div class="km-result" id="hasilKM">0 km</div></div></div>
+            <div class="col-md-3"><label class="form-label">Foto Odometer <span class="req">*</span></label><input type="file" name="Foto_Odometer" class="form-control" accept="image/*" onchange="previewFoto(this,'prevOdo')" {% if not p[8] %}required{% endif %}>
+                {% if p[8] %}<img id="prevOdo" class="foto-preview" src="{{ url_for('static', filename='uploads/perjalanan/' ~ p[8]) }}">{% else %}<img id="prevOdo" class="foto-preview" style="display:none;">{% endif %}
+                <small class="text-muted">Kosongkan jika tidak ingin mengubah foto.</small>
+            </div>
+        </div>
+
+        <p class="section-title"><i class="bi bi-geo-alt me-2"></i>Rute Perjalanan</p>
+        <div class="row g-3 mb-4">
+            <div class="col-md-4"><label class="form-label">Kebun Asal <span class="req">*</span></label>
+                <select name="ID_Kebun_Asal" class="form-select select2-searchable" data-search-placeholder="Ketik nama kebun asal..." required><option value="">-- Pilih Kebun Asal --</option>{% for kb in kebuns %}<option value="{{ kb[0] }}" {% if kb[0]==p[9] %}selected{% endif %}>{{ kb[1] }}</option>{% endfor %}</select>
+            </div>
+            <div class="col-md-4"><label class="form-label">Kebun Tujuan <span class="req">*</span></label>
+                <select name="ID_Kebun_Tujuan" class="form-select select2-searchable" data-search-placeholder="Ketik nama kebun tujuan..." required><option value="">-- Pilih Kebun Tujuan --</option>{% for kb in kebuns %}<option value="{{ kb[0] }}" {% if kb[0]==p[10] %}selected{% endif %}>{{ kb[1] }}</option>{% endfor %}</select>
+            </div>
+            <div class="col-md-4"><label class="form-label">Nama Penumpang <span class="req">*</span></label><input type="text" name="Nama_Penumpang" class="form-control" value="{{ p[11] or '' }}" placeholder="Nama penumpang" oninput="this.value = this.value.toUpperCase()" required></div>
+            <div class="col-12"><label class="form-label">Keterangan</label><textarea name="Keterangan" class="form-control" rows="2" oninput="this.value = this.value.toUpperCase()">{{ p[12] or '' }}</textarea></div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-success px-4"><i class="bi bi-check-circle me-2"></i>Perbarui Perjalanan</button>
+            <a href="{{ url_for('perjalanan.list_perjalanan') }}" class="btn btn-outline-secondary px-4">Batal</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+
+{% endblock %}

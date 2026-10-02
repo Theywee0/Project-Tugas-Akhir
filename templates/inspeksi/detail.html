@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import status_badge %}
+{% block title %}Detail Inspeksi{% endblock %}
+{% block page_title %}Detail Inspeksi #{{ inspeksi[0] }}{% endblock %}
+{% block topbar_icon %}bi bi-clipboard-check-fill{% endblock %}
+{% block head_extra %}
+
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <p class="subtitle mb-0">Hasil pemeriksaan kondisi kendaraan.</p>
+    <div class="d-flex gap-2">
+        {% if session['role']=='kepala_operasional_gs' or status_verifikasi=='Belum' %}
+        <a href="{{ url_for('inspeksi.edit_inspeksi', id=inspeksi[0]) }}" class="btn btn-warning btn-sm"><i class="bi bi-pencil me-1"></i>Edit</a>
+        {% endif %}
+        <a href="{{ url_for('inspeksi.list_inspeksi') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Kembali</a>
+    </div>
+</div>
+<div class="app-card mb-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <span>Status Verifikasi: {{ status_badge(status_verifikasi) }}</span>
+    {% if status_verifikasi=='Terverifikasi' %}
+    <small class="text-muted"><i class="bi bi-person-check me-1"></i>Diverifikasi oleh <strong>{{ verifikator or 'Sistem' }}</strong>{% if waktu_verifikasi %} pada {{ waktu_verifikasi }}{% endif %}</small>
+    {% else %}
+    <small class="text-muted"><i class="bi bi-info-circle me-1"></i>Data masih dapat diedit oleh driver pemilik.</small>
+    {% endif %}
+</div>
+<!-- inspeksi: 0=ID,1=ID_Driver,2=ID_Kendaraan,3=Tanggal,4=KM,5=Koordinat, 17 komponen mulai idx 6, lalu Catatan(50), Nama_Driver(-2), No_Polisi(-1) -->
+<div class="app-card">
+    <p class="section-title"><i class="bi bi-info-circle me-2"></i>Informasi Umum</p>
+    <div class="row g-3 mb-4">
+        <div class="col-md-3"><div class="info-label">Tanggal</div><div class="info-value">{{ inspeksi[3] }}</div></div>
+        <div class="col-md-3"><div class="info-label">Driver</div><div class="info-value">{{ inspeksi[-2] or '-' }}</div></div>
+        <div class="col-md-3"><div class="info-label">Kendaraan</div><div class="info-value">{{ inspeksi[-1] or '-' }}</div></div>
+        <div class="col-md-3"><div class="info-label">KM Kendaraan</div><div class="info-value">{{ inspeksi[4] }} km</div></div>
+        <div class="col-md-6"><div class="info-label">Koordinat</div><div class="info-value">{{ inspeksi[5] or '-' }}</div></div>
+
+    </div>
+
+    <p class="section-title"><i class="bi bi-search me-2"></i>Hasil Pemeriksaan Komponen</p>
+    <div class="row g-2 mb-4">
+        {% set komponen_list = [
+            ('Oli Mesin',6,7,8),('Oli Transmisi & Gardan',9,10,11),('Air Radiator',12,13,14),('Minyak Rem',15,16,17),
+            ('V-Belt',18,19,20),('Body & Exterior',21,22,23),('Ban',24,25,26),('Interior & Kelengkapan',27,28,29),
+            ('Lampu-Lampu',30,31,None),('Suara Mesin',32,33,None),('Getaran Mesin',34,35,None),('Indikator Dashboard',36,37,38),
+            ('Asap Knalpot',39,40,41),('Transmisi',42,43,None),('Power Steering',44,45,None),('Pengereman',46,47,None),('Suspensi & Kaki-Kaki',48,49,None)
+        ] %}
+        {% for label, idx_kondisi, idx_ket, idx_foto in komponen_list %}
+        <div class="col-md-6">
+            <div class="komponen-card">
+                <div class="komponen-title">
+                    <span>{{ label }}</span>
+                    {% if inspeksi[idx_kondisi] == 'Normal' %}<span class="badge-normal">Normal</span>{% else %}<span class="badge-tn">Tidak Normal</span>{% endif %}
+                </div>
+                {% if inspeksi[idx_ket] %}<div class="komponen-ket"><i class="bi bi-chat-left-text me-1"></i>{{ inspeksi[idx_ket] }}</div>{% endif %}
+                {% if idx_foto and inspeksi[idx_foto] %}<img src="{{ url_for('static', filename='uploads/inspeksi/' + inspeksi[idx_foto]) }}" class="foto-komponen">{% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <p class="section-title"><i class="bi bi-journal-text me-2"></i>Catatan Umum</p>
+    <p class="text-muted mb-0">{{ inspeksi[50] or 'Tidak ada catatan tambahan.' }}</p>
+</div>
+{% endblock %}

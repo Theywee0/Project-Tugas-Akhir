@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Sistem Kendaraan{% endblock %} | HPI Agro</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='4' fill='%231a472a'/%3E%3Cpath d='M3 10.5h7v-3H8L7 6H3v4.5z' fill='%23fff'/%3E%3Ccircle cx='4.5' cy='11' r='1' fill='%23fff'/%3E%3Ccircle cx='9' cy='11' r='1' fill='%23fff'/%3E%3C/svg%3E">
+    <link href="{{ url_for('static', filename='vendor/bootstrap/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='vendor/bootstrap-icons/bootstrap-icons.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/app.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+    {% block head_extra %}{% endblock %}
+</head>
+<body>
+{% set role = session.get('role') %}
+{% set ep = request.endpoint or '' %}
+
+<!-- ===================== SIDEBAR ===================== -->
+<aside class="app-sidebar" id="appSidebar">
+    <div class="brand">
+        <div class="logo" style="background: transparent; border-radius: 0; width: 42px; height: 42px;">
+            <img src="{{ url_for('static', filename='img/logohpiagro.jpg') }}" alt="HPI Agro" style="width: 100%; height: 100%; object-fit: contain;">
+        </div>
+        <div>
+            <h6>Kendaraan Operasional</h6>
+            <small>PT HPI Agro Pontianak</small>
+        </div>
+    </div>
+    <nav>
+                {% if role in ['admin', 'kepala_operasional_gs'] %}
+        <div class="nav-section">Menu Utama</div>
+        <a href="{{ url_for('laporan.dashboard_admin') }}" class="nav-link {{ 'active' if ep == 'laporan.dashboard_admin' }}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+
+        {% if role == 'kepala_operasional_gs' %}
+        <div class="nav-section">Data Master</div>
+        <a href="{{ url_for('kendaraan.list_kendaraan') }}" class="nav-link {{ 'active' if request.blueprint == 'kendaraan' }}"><i class="bi bi-car-front-fill"></i> Data Kendaraan</a>
+        <a href="{{ url_for('driver.list_driver') }}" class="nav-link {{ 'active' if request.blueprint == 'driver' }}"><i class="bi bi-person-badge-fill"></i> Data Driver</a>
+        <a href="{{ url_for('kebun.list_kebun') }}" class="nav-link {{ 'active' if request.blueprint == 'kebun' }}"><i class="bi bi-tree-fill"></i> Data Kebun</a>
+
+        <div class="nav-section">Operasional</div>
+        <a href="{{ url_for('perjalanan.list_perjalanan') }}" class="nav-link {{ 'active' if request.blueprint == 'perjalanan' }}"><i class="bi bi-map-fill"></i> Perjalanan</a>
+        <a href="{{ url_for('bbm.list_bbm') }}" class="nav-link {{ 'active' if request.blueprint == 'bbm' }}"><i class="bi bi-fuel-pump-fill"></i> Pengisian BBM</a>
+        <a href="{{ url_for('inspeksi.list_inspeksi') }}" class="nav-link {{ 'active' if request.blueprint == 'inspeksi' }}"><i class="bi bi-clipboard-check-fill"></i> Inspeksi</a>
+        <a href="{{ url_for('maintenance.list_maintenance') }}" class="nav-link {{ 'active' if request.blueprint == 'maintenance' }}"><i class="bi bi-tools"></i> Maintenance</a>
+        {% endif %}
+
+        <div class="nav-section">Laporan</div>
+        <a href="{{ url_for('laporan.laporan_perjalanan') }}" class="nav-link {{ 'active' if ep == 'laporan.laporan_perjalanan' }}"><i class="bi bi-file-earmark-text-fill"></i> Laporan Perjalanan</a>
+        <a href="{{ url_for('laporan.laporan_bbm') }}" class="nav-link {{ 'active' if ep == 'laporan.laporan_bbm' }}"><i class="bi bi-bar-chart-fill"></i> Laporan BBM</a>
+        <a href="{{ url_for('laporan.laporan_inspeksi') }}" class="nav-link {{ 'active' if ep == 'laporan.laporan_inspeksi' }}"><i class="bi bi-clipboard-check-fill"></i> Laporan Inspeksi</a>
+        <a href="{{ url_for('laporan.laporan_maintenance') }}" class="nav-link {{ 'active' if ep == 'laporan.laporan_maintenance' }}"><i class="bi bi-tools"></i> Laporan Maintenance</a>
+
+        <div class="nav-section">Analisis</div>
+        <a href="{{ url_for('clustering.index_clustering') }}" class="nav-link {{ 'active' if request.blueprint == 'clustering' }}"><i class="bi bi-diagram-3-fill"></i> Analisis Clustering</a>
+
+        <div class="nav-section">Sistem</div>
+        <a href="{{ url_for('user.list_user') }}" class="nav-link {{ 'active' if request.blueprint == 'user' }}"><i class="bi bi-people-fill"></i> Manajemen User</a>
+        <a href="{{ url_for('auth.logout') }}" class="nav-link logout"><i class="bi bi-box-arrow-left"></i> Logout</a>
+        {% elif role == 'driver' %}
+        <div class="nav-section">Menu Utama</div>
+        <a href="{{ url_for('auth.dashboard_driver') }}" class="nav-link {{ 'active' if ep == 'auth.dashboard_driver' }}"><i class="bi bi-house-door-fill"></i> Dashboard</a>
+
+        <div class="nav-section">Operasional</div>
+        <a href="{{ url_for('perjalanan.list_perjalanan') }}" class="nav-link {{ 'active' if request.blueprint == 'perjalanan' }}"><i class="bi bi-map-fill"></i> Perjalanan</a>
+        <a href="{{ url_for('bbm.list_bbm') }}" class="nav-link {{ 'active' if request.blueprint == 'bbm' }}"><i class="bi bi-fuel-pump-fill"></i> Pengisian BBM</a>
+        <a href="{{ url_for('inspeksi.list_inspeksi') }}" class="nav-link {{ 'active' if request.blueprint == 'inspeksi' }}"><i class="bi bi-clipboard-check-fill"></i> Inspeksi</a>
+        <a href="{{ url_for('maintenance.list_maintenance') }}" class="nav-link {{ 'active' if request.blueprint == 'maintenance' }}"><i class="bi bi-tools"></i> Maintenance</a>
+
+        <div class="nav-section">Akun</div>
+        <a href="{{ url_for('auth.logout') }}" class="nav-link logout"><i class="bi bi-box-arrow-left"></i> Logout</a>
+        {% endif %}
+    </nav>
+</aside>
+<div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar()"></div>
+
+<!-- ===================== MAIN ===================== -->
+<div class="app-main">
+    <header class="app-topbar">
+        <div class="title">
+            <button class="btn-burger" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+            <i class="{% block topbar_icon %}bi bi-grid-1x2-fill{% endblock %}"></i>
+            <h1>{% block page_title %}Dashboard{% endblock %}</h1>
+        </div>
+        <div class="topbar-user">
+            {% if role == 'kepala_operasional_gs' %}
+                <span class="role-badge admin" style="background:var(--primary-color);">KEPALA GS</span>
+            {% elif role == 'admin' %}
+                <span class="role-badge admin">ADMIN</span>
+            {% else %}
+                <span class="role-badge driver">DRIVER</span>
+            {% endif %}
+            <span class="name d-none d-sm-inline">{{ session.get('nama', 'Pengguna') }}</span>
+            <div class="avatar">{{ (session.get('nama', 'U')[:2])|upper }}</div>
+        </div>
+    </header>
+
+    <main class="app-content">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}{% for cat, msg in messages %}
+            <div class="alert alert-{{ cat }} alert-dismissible fade show">{{ msg }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+            {% endfor %}{% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="{{ url_for('static', filename='vendor/bootstrap/bootstrap.bundle.min.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script src="{{ url_for('static', filename='js/form-utils.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

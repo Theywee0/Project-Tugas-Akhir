@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block title %}Edit Kendaraan{% endblock %}
+{% block page_title %}Edit Kendaraan{% endblock %}
+{% block topbar_icon %}bi bi-pencil-square{% endblock %}
+{% block head_extra %}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <p class="subtitle mb-0">Perbarui data kendaraan operasional.</p>
+    <a href="{{ url_for('kendaraan.list_kendaraan') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Kembali</a>
+</div>
+<!-- kendaraan index: 0=ID,1=No_Polisi,2=Merek,3=Tipe,4=Tahun,5=Model,6=Kap,7=Mesin,8=Silinder,9=Transmisi,10=SKB,11=No_Rangka,12=BBM1,13=BBM2,14=BBM3,15=Depan,16=Kanan,17=Kiri,18=Belakang,19=STNK -->
+<div class="app-card">
+    <form method="POST" enctype="multipart/form-data">
+        <p class="section-title"><i class="bi bi-info-circle me-2"></i>Data Umum Kendaraan</p>
+        <div class="row g-3 mb-4">
+            <div class="col-md-4"><label class="form-label">No. Polisi <span class="req">*</span></label><input type="text" name="No_Polisi" class="form-control" value="{{ kendaraan[1] }}" required></div>
+            <div class="col-md-4"><label class="form-label">Merek <span class="req">*</span></label><input type="text" name="Merek" class="form-control" value="{{ kendaraan[2] }}" required></div>
+            <div class="col-md-4"><label class="form-label">Tipe <span class="req">*</span></label><input type="text" name="Tipe" class="form-control" value="{{ kendaraan[3] }}" required></div>
+            <div class="col-md-4"><label class="form-label">Model <span class="req">*</span></label><input type="text" name="Model" class="form-control" value="{{ kendaraan[5] }}" required></div>
+            <div class="col-md-4"><label class="form-label">Tahun <span class="req">*</span></label><input type="number" name="Tahun" class="form-control" value="{{ kendaraan[4] }}" required></div>
+            <div class="col-md-4"><label class="form-label">No. Rangka <span class="req">*</span></label><input type="text" name="No_Rangka" class="form-control" value="{{ kendaraan[11] }}" required></div>
+        </div>
+
+        <p class="section-title"><i class="bi bi-gear me-2"></i>Spesifikasi Mesin</p>
+        <div class="row g-3 mb-4">
+            <div class="col-md-3"><label class="form-label">Kapasitas Penumpang <span class="req">*</span></label><input type="number" name="Kapasitas_Penumpang" class="form-control" value="{{ kendaraan[6] }}" required></div>
+            <div class="col-md-3"><label class="form-label">Kapasitas Tangki BBM <span class="req">*</span></label><input type="number" name="Kapasitas_TangkiBBM" class="form-control" value="{{ kendaraan[20] }}" step="0.1" min="0" required></div>
+            <div class="col-md-3"><label class="form-label">Ukuran Mesin (cc) <span class="req">*</span></label><input type="number" name="Ukuran_Mesin" class="form-control" value="{{ kendaraan[7] }}" required></div>
+            <div class="col-md-3"><label class="form-label">Jumlah Silinder <span class="req">*</span></label><input type="number" name="Jumlah_Slinder" class="form-control" value="{{ kendaraan[8] }}" required></div>
+            <div class="col-md-3"><label class="form-label">Transmisi <span class="req">*</span></label>
+                <select name="Transmisi" class="form-select" required>{% for t in ['Manual','Otomatis','CVT'] %}<option value="{{ t }}" {% if kendaraan[9]==t %}selected{% endif %}>{{ t }}</option>{% endfor %}</select>
+            </div>
+            <div class="col-md-4"><label class="form-label">SKB - Standar Konsumsi BBM <span class="req">*</span></label><input type="number" name="SKB" class="form-control" value="{{ kendaraan[10] }}" step="0.001" min="0" required><small class="text-muted">Liter per km (acuan pabrikan)</small></div>
+        </div>
+
+        <p class="section-title"><i class="bi bi-fuel-pump me-2"></i>Jenis BBM</p>
+        <div class="row g-3 mb-4">
+            {% set bbm_options = ['Pertalite','Pertamax','Pertamax Turbo','Solar','Dexlite','Pertamina Dex'] %}
+            {% for i, fname, label in [(0,'Jenis_BBM1','BBM 1'),(1,'Jenis_BBM2','BBM 2'),(2,'Jenis_BBM3','BBM 3')] %}
+            <div class="col-md-4">
+                <label class="form-label">Jenis {{ label }} {% if i==0 %}<span class="req">*</span>{% else %}<small class="text-muted">(opsional)</small>{% endif %}</label>
+                <select name="{{ fname }}" class="form-select" {% if i==0 %}required{% endif %}>
+                    {% if i>0 %}<option value="">-- Tidak Ada --</option>{% endif %}
+                    {% for b in bbm_options %}<option value="{{ b }}" {% if kendaraan[12+i]==b %}selected{% endif %}>{{ b }}</option>{% endfor %}
+                </select>
+            </div>
+            {% endfor %}
+        </div>
+
+        <p class="section-title"><i class="bi bi-camera me-2"></i>Foto Kendaraan <small class="text-muted fw-normal">(kosongkan jika tidak ingin mengubah)</small></p>
+        <div class="row g-3 mb-4">
+            {% for idx, fname, label in [(0,'Foto_Depan','Depan'),(1,'Foto_Kanan','Kanan'),(2,'Foto_Kiri','Kiri'),(3,'Foto_Belakang','Belakang'),(4,'Foto_STNK','STNK')] %}
+            <div class="col-md-4">
+                <label class="form-label">Foto {{ label }}</label>
+                {% if kendaraan[15+idx] %}<img src="{{ url_for('static', filename='uploads/kendaraan/' + kendaraan[15+idx]) }}" class="foto-thumb d-block mb-2">{% endif %}
+                <input type="file" name="{{ fname }}" class="form-control mt-1" accept="image/*" onchange="previewFoto(this, 'prev_{{ fname }}')">
+                <img id="prev_{{ fname }}" class="foto-preview">
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-success px-4"><i class="bi bi-check-circle me-2"></i>Perbarui Kendaraan</button>
+            <a href="{{ url_for('kendaraan.list_kendaraan') }}" class="btn btn-outline-secondary px-4">Batal</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+
+{% endblock %}

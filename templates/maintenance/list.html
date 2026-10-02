@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import status_badge, tombol_verifikasi %}
+{% block title %}Data Maintenance{% endblock %}
+{% block page_title %}Data Maintenance{% endblock %}
+{% block topbar_icon %}bi bi-tools{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <p class="subtitle mb-0">{% if session['role']=='driver' %}Riwayat perbaikan kendaraan yang Anda ajukan.{% else %}Seluruh data perbaikan kendaraan operasional.{% endif %}</p>
+    {% if session['role'] == 'driver' %}
+    <a href="{{ url_for('maintenance.tambah_maintenance') }}" class="btn btn-success"><i class="bi bi-plus-lg me-1"></i>Tambah Maintenance</a>
+    {% endif %}
+</div>
+
+<div class="app-card p-0">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead><tr><th class="ps-3">No</th><th>Tanggal</th><th>Driver</th><th>Kendaraan</th><th>KM</th><th>Keluhan</th><th>Sparepart</th><th>Status</th><th class="text-end pe-4">Aksi</th></tr></thead>
+            <tbody>
+            {% if data %}
+                {% for m in data %}
+                <tr>
+                    <td class="ps-3">{{ loop.index }}</td>
+                    <td>{{ m[3] }}</td>
+                    <td>{{ m[13] or '-' }}</td>
+                    <td>{{ m[14] or '-' }}</td>
+                    <td>{{ m[4] }} km</td>
+                    <td><span class="badge bg-danger">{{ m[8] }} keluhan</span></td>
+                    <td><span class="badge bg-warning text-dark">{{ m[10] }} part</span></td>
+                    <td>{{ status_badge(m[15]) }}</td>
+                    <td class="text-end pe-4">
+                        <a href="{{ url_for('maintenance.detail_maintenance', id=m[0]) }}" class="btn btn-info btn-sm btn-icon" title="Detail"><i class="bi bi-eye"></i></a>
+                        {% if session['role']=='kepala_operasional_gs' or m[15]=='Belum' %}
+                        <a href="{{ url_for('maintenance.edit_maintenance', id=m[0]) }}" class="btn btn-warning btn-sm btn-icon" title="Edit"><i class="bi bi-pencil"></i></a>
+                        {% endif %}
+                        {% if session['role']=='kepala_operasional_gs' %}
+                        {{ tombol_verifikasi(m[15], 'maintenance.verifikasi_maintenance', 'maintenance.batal_verifikasi_maintenance', m[0]) }}
+                        <a href="{{ url_for('maintenance.hapus_maintenance', id=m[0]) }}" class="btn btn-danger btn-sm btn-icon" title="Hapus" onclick="return confirm('Yakin hapus data maintenance ini?')"><i class="bi bi-trash"></i></a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr><td colspan="9"><div class="empty-state"><i class="bi bi-inbox"></i>Belum ada data maintenance.</div></td></tr>
+            {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

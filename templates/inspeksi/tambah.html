@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import pilih_perjalanan, koordinat_gps %}
+{% block title %}Form Inspeksi{% endblock %}
+{% block page_title %}Form Inspeksi Kendaraan{% endblock %}
+{% block topbar_icon %}bi bi-clipboard-check-fill{% endblock %}
+{% block head_extra %}
+
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <p class="subtitle mb-0">Pemeriksaan 17 komponen kondisi kendaraan.</p>
+    <a href="{{ url_for('inspeksi.list_inspeksi') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Kembali</a>
+</div>
+<div class="app-card">
+    <form method="POST" enctype="multipart/form-data">
+        <p class="section-title"><i class="bi bi-info-circle me-2"></i>Informasi Inspeksi</p>
+        <div class="row g-3 mb-4">
+            <div class="col-md-3"><label class="form-label">Tanggal <span class="req">*</span></label><input type="date" name="Tanggal" class="form-control" required></div>
+            <div class="col-md-5"><label class="form-label">Kendaraan <span class="req">*</span></label><select name="ID_Kendaraan" id="selKendaraan" class="form-select select2-searchable" data-search-placeholder="Cari plat atau merek kendaraan..." required onchange="isiKmKendaraan()"><option value="">-- Pilih Kendaraan --</option>{% for k in kendaraans %}<option value="{{ k[0] }}">{{ k[1] }} - {{ k[2] }} {{ k[3] }}</option>{% endfor %}</select></div>
+            <div class="col-md-4"><label class="form-label">KM Kendaraan</label><input type="number" name="KM_Kendaraan" id="kmKendaraan" class="form-control" placeholder="Pilih kendaraan dulu" min="0" readonly><small class="text-muted" id="kmHint"><i class="bi bi-info-circle me-1"></i>Terisi otomatis dari KM terakhir</small></div>
+            <div class="col-md-6"><label class="form-label">Koordinat Lokasi <span class="req">*</span></label>{{ koordinat_gps() }}</div>
+        </div>
+
+        <p class="section-title"><i class="bi bi-search me-2"></i>Hasil Pemeriksaan Komponen</p>
+        {% set komponen_list = [
+            ('Oli_Mesin','Oli Mesin','Foto_Oli_Mesin','Keterangan_Oli_Mesin', True),
+            ('Oli_Transmisi_Gardan','Oli Transmisi & Gardan','Foto_Oli_Transmisi_Gardan','Keterangan_Oli_Transmisi_Gardan', True),
+            ('Air_Radiator','Air Radiator','Foto_Air_Radiator','Keterangan_Air_Radiator', True),
+            ('Minyak_Rem','Minyak Rem','Foto_Minyak_Rem','Keterangan_Minyak_Rem', True),
+            ('V_Belt','V-Belt','Foto_V_Belt','Keterangan_V_Belt', True),
+            ('Body_Exterior','Body & Exterior','Foto_Body_Exterior','Keterangan_Body_Exterior', True),
+            ('Ban','Ban','Foto_Ban','Keterangan_Ban', True),
+            ('Interior_Kelengkapan','Interior & Kelengkapan','Foto_Interior_Kelengkapan','Keterangan_Interior_Kelengkapan', True),
+            ('Lampu_Lampu','Lampu-Lampu','','Keterangan_Lampu_Lampu', False),
+            ('Suara_Mesin','Suara Mesin','','Keterangan_Suara_Mesin', False),
+            ('Getaran_Mesin','Getaran Mesin','','Keterangan_Getaran_Mesin', False),
+            ('Indikator_Dashboard','Indikator Dashboard','Foto_Indikator_Dashboard','Keterangan_Indikator_Dashboard', True),
+            ('Asap_Knalpot','Asap Knalpot','Foto_Asap_Knalpot','Keterangan_Asap_Knalpot', True),
+            ('Transmisi','Transmisi','','Keterangan_Transmisi', False),
+            ('Power_Steering','Power Steering','','Keterangan_Power_Steering', False),
+            ('Pengereman','Pengereman','','Keterangan_Pengereman', False),
+            ('Suspensi_Kaki_Kaki','Suspensi & Kaki-Kaki','','Keterangan_Suspensi_Kaki_Kaki', False),
+        ] %}
+        <div class="row g-3 mb-4">
+            {% for field, label, foto_field, ket_field, ada_foto in komponen_list %}
+            <div class="col-md-6">
+                <div class="komponen-card" data-field="{{ field }}">
+                    <div class="komponen-title"><i class="bi bi-check2-circle text-success me-2"></i>{{ label }}</div>
+                    <div class="btn-group btn-group-sm w-100 mb-2 kondisi-toggle" role="group" aria-label="Kondisi {{ label }}">
+                        <input type="radio" class="btn-check kondisi-radio" name="{{ field }}" id="{{ field }}_N" value="Normal" autocomplete="off" checked>
+                        <label class="btn btn-outline-success" for="{{ field }}_N"><i class="bi bi-check-circle me-1"></i>Normal</label>
+                        <input type="radio" class="btn-check kondisi-radio" name="{{ field }}" id="{{ field }}_TN" value="Tidak Normal" autocomplete="off">
+                        <label class="btn btn-outline-danger" for="{{ field }}_TN"><i class="bi bi-exclamation-triangle me-1"></i>Tidak Normal</label>
+                    </div>
+                    <div class="detail-tn p-2 border rounded mt-2 bg-light" style="display:none;">
+                        <label class="form-label mb-1" style="font-size:0.85rem;">Catatan Kondisi <span class="req">*</span></label>
+                        <input type="text" name="{{ ket_field }}" class="form-control form-control-sm mb-2 ket-input" placeholder="Jelaskan kondisi {{ label }}..." oninput="this.value = this.value.toUpperCase();">
+                        {% if ada_foto and foto_field %}
+                        <label class="form-label mb-1" style="font-size:0.85rem;">Upload Foto Bukti <span class="req">*</span></label>
+                        <input type="file" name="{{ foto_field }}" class="form-control form-control-sm" accept="image/*" onchange="previewFoto(this, 'prev_{{ field }}')"><img id="prev_{{ field }}" class="foto-preview mt-2">
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="mb-4">
+            <label class="form-label fw-bold">Catatan Umum</label>
+            <textarea name="Catatan" class="form-control" rows="3" placeholder="Catatan tambahan hasil inspeksi secara keseluruhan" oninput="this.value = this.value.toUpperCase();"></textarea>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-success px-4"><i class="bi bi-check-circle me-2"></i>Simpan Inspeksi</button>
+            <a href="{{ url_for('inspeksi.list_inspeksi') }}" class="btn btn-outline-secondary px-4">Batal</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll('.kondisi-radio').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const card = this.closest('.komponen-card');
+        const detailDiv = card.querySelector('.detail-tn');
+        const ketInput = detailDiv.querySelector('.ket-input');
+        const fotoInput = detailDiv.querySelector('input[type="file"]');
+        
+        if (this.value === 'Tidak Normal') {
+            detailDiv.style.display = 'block';
+            if (ketInput) ketInput.required = true;
+            if (fotoInput) fotoInput.required = true;
+        } else {
+            detailDiv.style.display = 'none';
+            if (ketInput) ketInput.required = false;
+            if (fotoInput) fotoInput.required = false;
+        }
+    });
+});
+
+// Trigger change event on page load to set initial state correctly
+document.querySelectorAll('.kondisi-radio:checked').forEach(radio => {
+    radio.dispatchEvent(new Event('change'));
+});
+</script>
+{% endblock %}

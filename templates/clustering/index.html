@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+{% block title %}Analisis Clustering{% endblock %}
+{% block page_title %}Analisis K-Means Clustering{% endblock %}
+{% block topbar_icon %}bi bi-diagram-3-fill{% endblock %}
+{% block head_extra %}
+<script src="{{ url_for('static', filename='vendor/chart/chart.umd.min.js') }}"></script>
+<link href="{{ url_for('static', filename='css/clustering.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+{% if error %}<div class="alert alert-danger"><i class="bi bi-x-circle me-2"></i>{{ error }}</div>{% endif %}
+
+<!-- HEADER RINGKASAN & TOMBOL -->
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+    <div class="d-flex gap-3 flex-wrap">
+        {% if hasil and hasil.sukses %}
+            {% for kat, count in hasil.ringkasan | dictsort %}
+            <div class="card-custom mb-0 px-4 py-2 text-center" style="min-width: 120px;">
+                <div style="font-size:1.5rem;font-weight:700;color:var(--accent);">{{ count }}</div>
+                <div class="text-muted" style="font-size:.8rem;">{{ kat }}</div>
+            </div>
+            {% endfor %}
+            <div class="card-custom mb-0 px-4 py-2 text-center" style="min-width: 120px;">
+                <div style="font-size:1.5rem;font-weight:700;color:#333;">{{ hasil.n_kendaraan }}</div>
+                <div class="text-muted" style="font-size:.8rem;">Total Kendaraan</div>
+            </div>
+        {% else %}
+            <div class="card-custom mb-0 px-4 py-3 text-muted">Belum ada analisis yang dijalankan.</div>
+        {% endif %}
+    </div>
+    <div class="d-flex gap-2 align-items-center mt-3 mt-lg-0">
+        <form method="POST" class="m-0">
+            <button type="submit" class="btn btn-cluster"><i class="bi bi-play-fill me-2"></i>Jalankan Clustering</button>
+        </form>
+    </div>
+</div>
+
+{% if hasil and hasil.sukses %}
+<!-- GRID VISUAL TENGAH -->
+<div class="row g-4 mb-4">
+    <!-- Kiri: Scatter Plot -->
+    <div class="col-lg-7">
+        <div class="card-custom h-100 mb-0 d-flex flex-column">
+            <h6 class="fw-bold mb-3"><i class="bi bi-graph-up me-2 text-success"></i>Visualisasi Klaster</h6>
+            <div style="flex-grow: 1; min-height: 300px; position: relative;">
+                <canvas id="chartScatter"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Kanan: Stacked Elbow + Average Table -->
+    <div class="col-lg-5">
+        {% if hasil.elbow_k and hasil.elbow_k|length > 1 %}
+        <div class="card-custom mb-4">
+            <h6 class="fw-bold mb-1"><i class="bi bi-graph-down-arrow me-2 text-success"></i>Elbow Method</h6>
+            <div style="height: 150px; width: 100%; position: relative;">
+                <canvas id="chartElbow"></canvas>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="card-custom mb-0">
+            <h6 class="fw-bold mb-3"><i class="bi bi-bar-chart me-2 text-success"></i>Rata-rata per Klaster</h6>
+            <div style="max-height: 250px; overflow-y: auto; padding-right: 5px;">
+            {% if profil_cluster %}
+                {% for kat, p in profil_cluster | dictsort %}
+                <div class="p-2 border rounded mb-2" style="background:#fafafa; font-size: 0.8rem;">
+                    <div class="fw-bold mb-1 border-bottom pb-1" style="color:var(--accent);">{{ kat }}</div>
+                    <div class="row g-1 text-muted mt-1">
+                        <div class="col-6 d-flex justify-content-between"><span>Jarak:</span> <span class="fw-bold text-dark">{{ "{:,.0f}".format(p.avg_jarak) }} km</span></div>
+                        <div class="col-6 d-flex justify-content-between"><span>BBM:</span> <span class="fw-bold text-dark">{{ "{:,.0f}".format(p.avg_bbm) }} L</span></div>
+                        <div class="col-6 d-flex justify-content-between"><span>Rasio:</span> <span class="fw-bold text-dark">{{ p.rasio }}</span></div>
+                        <div class="col-6 d-flex justify-content-between"><span>Maint:</span> <span class="fw-bold text-dark">{{ p.maint }}x</span></div>
+                        <div class="col-12 d-flex justify-content-between mt-1 pt-1 border-top"><span>Inspeksi Rusak:</span> <span class="fw-bold text-dark">{{ p.inspeksi }} item</span></div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- BAWAH: MASTER TABEL -->
+<div class="card-custom">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <h6 class="fw-bold mb-0"><i class="bi bi-table me-2 text-success"></i>Data Detail Seluruh Kendaraan</h6>
+        <div class="d-flex align-items-center gap-2">
+            <label for="filterCluster" class="text-muted small mb-0 text-nowrap">Filter Klaster:</label>
+            <select id="filterCluster" class="form-select form-select-sm" style="width: auto;" onchange="filterTable()">
+                <option value="Semua">Semua Klaster</option>
+                {% for kat in hasil.ringkasan.keys() %}
+                <option value="{{ kat }}">{{ kat }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    
+    <div class="table-responsive">
+        <table class="table table-sm align-middle" id="masterTable">
+            <thead class="table-light">
+                <tr>
+                    <th>No</th><th>No. Polisi</th><th>Merek/Tipe</th>
+                    <th>Total Jarak</th><th>Total BBM</th><th>Rasio (L/km)</th>
+                    <th>Frek.</th><th>Maint.</th><th>Inspeksi TN</th><th>Klaster</th>
+                </tr>
+            </thead>
+            <tbody id="masterTableBody">
+                <!-- Data: 0=Id_Cluster,1=No_Polisi,2=Merek,3=Tipe,4=Total_Jarak,5=Total_Bbm,6=Rasio,7=Standar,8=Selisih,9=Frekuensi,10=Maint,11=Inspeksi_TN,12=Label,13=Kategori -->
+                {% if riwayat %}
+                    {% for r in riwayat %}
+                    <tr data-klaster="{{ r[12] }}" class="data-row">
+                        <td class="row-num"></td>
+                        <td><strong>{{ r[1] }}</strong></td>
+                        <td>{{ r[2] }} {{ r[3] }}</td>
+                        <td>{{ "{:,.0f}".format(r[4]|float) }} km</td>
+                        <td>{{ "{:,.0f}".format(r[5]|float) }} L</td>
+                        <td>{{ "%.4f"|format(r[6]|float) }}</td>
+                        <td>{{ r[8] }}x</td>
+                        <td>{{ r[9] }}x</td>
+                        <td>{{ r[10] }}</td>
+                        <td>
+                            {% if r[12] == 'Normal' %}
+                                <span class="badge bg-success">{{ r[12] }}</span>
+                            {% elif r[12] == 'Kerusakan Ringan' %}
+                                <span class="badge bg-warning text-dark">{{ r[12] }}</span>
+                            {% elif r[12] == 'Kerusakan Berat' %}
+                                <span class="badge bg-danger">{{ r[12] }}</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ r[12] }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr><td colspan="10" class="text-center text-muted py-4">Tidak ada data.</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination Controls -->
+    <div class="d-flex justify-content-between align-items-center mt-3" id="paginationControls">
+        <div class="text-muted small" id="pageInfo">Menampilkan 0 data</div>
+        <ul class="pagination pagination-sm mb-0" id="paginationUL">
+            <!-- Diisi Javascript -->
+        </ul>
+    </div>
+</div>
+
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if hasil and hasil.sukses %}
+<script>
+    // Data untuk Chart dari Python
+    window.clusteringChartData = {
+        labels: {{ hasil.elbow_k|tojson if hasil.elbow_k else '[]' }},
+        wcss: {{ hasil.elbow_wcss|tojson if hasil.elbow_wcss else '[]' }},
+        scatterRaw: {{ scatter_data|safe }}
+    };
+</script>
+<script src="{{ url_for('static', filename='js/clustering.js') }}" defer></script>
+{% endif %}
+{% endblock %}

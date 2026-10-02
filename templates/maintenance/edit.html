@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import koordinat_gps %}
+{% block title %}Edit Maintenance{% endblock %}
+{% block page_title %}Edit Maintenance{% endblock %}
+{% block topbar_icon %}bi bi-pencil-square{% endblock %}
+{% block head_extra %}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <p class="subtitle mb-0">Perbarui data perawatan / perbaikan kendaraan.</p>
+    <a href="{{ url_for('maintenance.list_maintenance') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Kembali</a>
+</div>
+<div class="app-card">
+    <div class="alert alert-info py-2" style="font-size:.85rem;"><i class="bi bi-info-circle me-2"></i>Tulis setiap <strong>keluhan</strong> dan <strong>sparepart</strong> pada baris baru. Jumlah dihitung otomatis.</div>
+    <form method="POST" enctype="multipart/form-data">
+        <p class="section-title"><i class="bi bi-calendar me-2"></i>Informasi Maintenance</p>
+        <div class="row g-3 mb-4">
+            <div class="col-md-3"><label class="form-label">Tanggal <span class="req">*</span></label><input type="date" name="Tanggal" class="form-control" value="{{ m[3] }}" required></div>
+            {% if session['role']=='kepala_operasional_gs' %}
+            <div class="col-md-3"><label class="form-label">Driver</label><select name="ID_Driver" class="form-select"><option value="">-- Pilih Driver --</option>{% for d in drivers %}<option value="{{ d[0] }}" {% if d[0]==m[2] %}selected{% endif %}>{{ d[1] }}</option>{% endfor %}</select></div>
+            {% endif %}
+            <div class="col-md-3"><label class="form-label">Kendaraan <span class="req">*</span></label><select name="ID_Kendaraan" id="selKendaraan" class="form-select select2-searchable" data-search-placeholder="Cari plat atau merek kendaraan..." required onchange="isiKmKendaraan()"><option value="">-- Pilih Kendaraan --</option>{% for k in kendaraans %}<option value="{{ k[0] }}" {% if k[0]==m[1] %}selected{% endif %}>{{ k[1] }} - {{ k[2] }} {{ k[3] }}</option>{% endfor %}</select></div>
+            <div class="col-md-3"><label class="form-label">KM Kendaraan</label><input type="number" name="KM_Kendaraan" id="kmKendaraan" class="form-control" value="{{ m[4] }}" min="0" readonly><small class="text-muted" id="kmHint"><i class="bi bi-info-circle me-1"></i>Otomatis dari KM terakhir kendaraan</small></div>
+            <div class="col-md-4"><label class="form-label">Lokasi Maintenance <span class="req">*</span></label><input type="text" name="Lokasi_Maintenance" class="form-control" value="{{ m[5] or '' }}" placeholder="cth: Bengkel ABC Pontianak" required oninput="this.value = this.value.toUpperCase();"></div>
+            <div class="col-md-4"><label class="form-label">Koordinat Lokasi <span class="req">*</span></label>{{ koordinat_gps(m[6]) }}</div>
+        </div>
+
+        <p class="section-title"><i class="bi bi-exclamation-triangle me-2"></i>Keluhan & Sparepart</p>
+        <div class="row g-3 mb-4">
+            <div class="col-md-6"><label class="form-label">Daftar Keluhan <span class="req">*</span></label>
+                <textarea name="Keluhan" id="txtKeluhan" class="form-control" rows="5" oninput="hitungBaris('txtKeluhan','ctrKeluhan'); this.value = this.value.toUpperCase();" required>{{ m[7] or '' }}</textarea>
+                <small class="text-muted">Jumlah keluhan: <strong id="ctrKeluhan">0</strong></small>
+            </div>
+            <div class="col-md-6"><label class="form-label">Daftar Sparepart Diganti <span class="req">*</span></label>
+                <textarea name="Spareparts" id="txtSpare" class="form-control" rows="5" oninput="hitungBaris('txtSpare','ctrSpare'); this.value = this.value.toUpperCase();" required>{{ m[9] or '' }}</textarea>
+                <small class="text-muted">Jumlah sparepart: <strong id="ctrSpare">0</strong></small>
+            </div>
+        </div>
+
+        <p class="section-title"><i class="bi bi-camera me-2"></i>Dokumentasi Foto</p>
+        <div class="row g-3 mb-4">
+            <div class="col-md-4"><label class="form-label">Foto Perbaikan {% if not m[11] %}<span class="req">*</span>{% endif %}</label><input type="file" name="Foto_Perbaikan" class="form-control" accept="image/*" onchange="previewFoto(this,'prevPerbaikan')" {% if not m[11] %}required{% endif %}>
+                {% if m[11] %}<img id="prevPerbaikan" class="foto-preview" src="{{ url_for('static', filename='uploads/maintenance/' ~ m[11]) }}">{% else %}<img id="prevPerbaikan" class="foto-preview" style="display:none;">{% endif %}
+                <small class="text-muted">Kosongkan jika tidak ingin mengubah foto.</small>
+            </div>
+            <div class="col-md-4"><label class="form-label">Foto Nota Sparepart {% if not m[12] %}<span class="req">*</span>{% endif %}</label><input type="file" name="Foto_Nota_SpareParts" class="form-control" accept="image/*" onchange="previewFoto(this,'prevNota')" {% if not m[12] %}required{% endif %}>
+                {% if m[12] %}<img id="prevNota" class="foto-preview" src="{{ url_for('static', filename='uploads/maintenance/' ~ m[12]) }}">{% else %}<img id="prevNota" class="foto-preview" style="display:none;">{% endif %}
+                <small class="text-muted">Kosongkan jika tidak ingin mengubah foto.</small>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-success px-4"><i class="bi bi-check-circle me-2"></i>Perbarui Maintenance</button>
+            <a href="{{ url_for('maintenance.list_maintenance') }}" class="btn btn-outline-secondary px-4">Batal</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+
+{% endblock %}

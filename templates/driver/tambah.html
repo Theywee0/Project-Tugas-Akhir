@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block title %}Tambah Driver{% endblock %}
+{% block page_title %}Tambah Driver{% endblock %}
+{% block topbar_icon %}bi bi-person-plus{% endblock %}
+{% block head_extra %}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <p class="subtitle mb-0">Tambah pengemudi baru beserta akun loginnya.</p>
+    <a href="{{ url_for('driver.list_driver') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Kembali</a>
+</div>
+<div class="app-card">
+    <div class="alert alert-info py-2" style="font-size:.85rem;"><i class="bi bi-info-circle me-2"></i>Menambah driver akan otomatis membuat <strong>akun login</strong> untuk driver tersebut.</div>
+    <form method="POST" enctype="multipart/form-data">
+        <p class="section-title"><i class="bi bi-key me-2"></i>Akun Login Driver</p>
+        <div class="row g-3 mb-4">
+            <div class="col-md-4"><label class="form-label">Username <span class="req">*</span></label><input type="text" name="username" class="form-control" placeholder="cth: driver02" autocomplete="off" required><small class="text-muted">Otomatis menjadi password awal driver</small></div>
+        </div>
+
+        <p class="section-title"><i class="bi bi-person me-2"></i>Data Driver</p>
+        <div class="row g-3 mb-4">
+            <div class="col-md-6"><label class="form-label">Nama Driver <span class="req">*</span></label><input type="text" name="Nama_Driver" class="form-control" placeholder="Nama lengkap driver" oninput="this.value = this.value.toUpperCase()" autocomplete="off" required></div>
+            <div class="col-md-3"><label class="form-label">Kontak (HP) <span class="req">*</span></label><input type="text" name="Kontak" class="form-control" placeholder="cth: 08123456789" pattern="^[0-9]+$" title="Hanya boleh berisi angka (tanpa spasi/huruf/simbol)" autocomplete="off" required></div>
+            <div class="col-md-3"><label class="form-label">Kontak Darurat <span class="req">*</span></label><input type="text" name="Kontak_Darurat" class="form-control" placeholder="cth: 08129876543" pattern="^[0-9]+$" title="Hanya boleh berisi angka (tanpa spasi/huruf/simbol)" autocomplete="off" required></div>
+            <div class="col-12"><label class="form-label">Alamat <span class="req">*</span></label><textarea name="Alamat" class="form-control" rows="2" placeholder="Alamat lengkap driver" oninput="this.value = this.value.toUpperCase()" autocomplete="off" required></textarea></div>
+        </div>
+
+        <p class="section-title"><i class="bi bi-camera me-2"></i>Foto Profil</p>
+        <div class="row g-3 mb-4">
+            <div class="col-md-4"><input type="file" name="Foto_Profil" class="form-control" accept="image/*" onchange="previewFoto(this, 'previewProfil')"><img id="previewProfil" class="foto-preview"></div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-success px-4"><i class="bi bi-check-circle me-2"></i>Simpan Driver</button>
+            <a href="{{ url_for('driver.list_driver') }}" class="btn btn-outline-secondary px-4">Batal</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+
+{% endblock %}

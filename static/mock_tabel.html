@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Mock Tabel Clustering</title>
+    <link href="/static/vendor/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
+    <link href="/static/css/app.css" rel="stylesheet">
+    <link href="/static/css/style.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; padding: 20px; font-family: "Segoe UI", Roboto, sans-serif; }
+        .card { border: none; box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075); border-radius: 0.5rem; background: #fff; }
+        .card-header { background-color: #fff; border-bottom: 1px solid #f0f0f0; padding: 15px 20px; font-weight: 600; color: #333; }
+        .table { margin-bottom: 0; font-size: 0.9rem; }
+        .table thead th { background-color: #f8f9fa; border-bottom: 2px solid #e9ecef; color: #6c757d; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; padding: 12px 15px; }
+        .table tbody td { padding: 15px; vertical-align: middle; border-bottom: 1px solid #f0f0f0; color: #495057; }
+        .badge { padding: 6px 10px; font-weight: 500; font-size: 0.75rem; border-radius: 4px; }
+        .bg-danger { background-color: #dc3545!important; }
+        .bg-warning { background-color: #ffc107!important; color: #212529; }
+        .bg-success { background-color: #198754!important; }
+        .text-muted { color: #8e959b!important; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="card-header">
+            <i class="bi bi-table me-2"></i> Data Detail Seluruh Kendaraan
+            <span class="float-end text-muted" style="font-weight: normal; font-size: 0.85rem;">Filter Klaster: <select class="form-select form-select-sm d-inline-block w-auto ms-2"><option>Semua Klaster</option></select></span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>NO</th>
+                        <th>NO. POLISI</th>
+                        <th>MEREK/TIPE</th>
+                        <th>TOTAL JARAK</th>
+                        <th>TOTAL BBM</th>
+                        <th>RASIO (L/KM)</th>
+                        <th>FREK.</th>
+                        <th>MAINT.</th>
+                        <th>INSPEKSI TN</th>
+                        <th>KLASTER</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="text-muted">1</td>
+                        <td><strong>KB8522MH</strong></td>
+                        <td>MITSUBISHI TRITON 2.5L DC HDX-L (4X4) M/T</td>
+                        <td>23,523 km</td>
+                        <td>3,136 L</td>
+                        <td>0.0075</td>
+                        <td>172x</td>
+                        <td>14x</td>
+                        <td>67</td>
+                        <td><span class="badge bg-danger">Kerusakan Berat</span></td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">2</td>
+                        <td><strong>KB1432MX</strong></td>
+                        <td>MITSUBISHI TRITON 2.5L DC GLS (4X4) M/T</td>
+                        <td>25,343 km</td>
+                        <td>2,027 L</td>
+                        <td>0.0008</td>
+                        <td>143x</td>
+                        <td>19x</td>
+                        <td>17</td>
+                        <td><span class="badge bg-warning">Kerusakan Ringan</span></td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">3</td>
+                        <td><strong>B2705BJF</strong></td>
+                        <td>TOYOTA NEW AVANZA 1.3G M/T</td>
+                        <td>18,556 km</td>
+                        <td>668 L</td>
+                        <td>0.0036</td>
+                        <td>93x</td>
+                        <td>9x</td>
+                        <td>0</td>
+                        <td><span class="badge bg-success">Normal</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
+

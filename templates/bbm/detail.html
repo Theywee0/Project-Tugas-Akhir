@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import status_badge %}
+{% block title %}Detail Pengisian BBM{% endblock %}
+{% block page_title %}Detail Pengisian BBM{% endblock %}
+{% block topbar_icon %}bi bi-fuel-pump-fill{% endblock %}
+{% block head_extra %}
+
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <p class="subtitle mb-0">Informasi lengkap pengisian bahan bakar.</p>
+    <div class="d-flex gap-2">
+        {% if session['role']=='kepala_operasional_gs' or b[18]=='Belum' %}
+        <a href="{{ url_for('bbm.edit_bbm', id=b[0]) }}" class="btn btn-warning btn-sm"><i class="bi bi-pencil me-1"></i>Edit</a>
+        {% endif %}
+        <a href="{{ url_for('bbm.list_bbm') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Kembali</a>
+    </div>
+</div>
+<!-- b: 0=ID,1=Tanggal,2=Jam,3=Id_Driver,4=Id_Kendaraan,5=Km_Awal,6=Km_Akhir,7=Jumlah_Km,8=Id_Kebun,9=Koordinat,10=Jenis_BBM,11=Jumlah_BBM,12=Foto_Nota,13=Nama_Driver,14=No_Polisi,15=Merek,16=Tipe,17=Nama_Kebun,18=Status,19=Waktu,20=Verifikator -->
+<div class="app-card mb-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <span>Status Verifikasi: {{ status_badge(b[18]) }}</span>
+    {% if b[18]=='Terverifikasi' %}
+    <small class="text-muted"><i class="bi bi-person-check me-1"></i>Diverifikasi oleh <strong>{{ b[20] or 'Sistem' }}</strong>{% if b[19] %} pada {{ b[19] }}{% endif %}</small>
+    {% else %}
+    <small class="text-muted"><i class="bi bi-info-circle me-1"></i>Data masih dapat diedit oleh driver pemilik.</small>
+    {% endif %}
+</div>
+<div class="app-card">
+    <p class="section-title"><i class="bi bi-calendar me-2"></i>Waktu & Petugas</p>
+    <div class="row g-3 mb-4">
+        <div class="col-md-3"><div class="info-label">Tanggal</div><div class="info-value">{{ b[1] }}</div></div>
+        <div class="col-md-3"><div class="info-label">Jam</div><div class="info-value">{{ b[2] }}</div></div>
+        <div class="col-md-3"><div class="info-label">Driver</div><div class="info-value">{{ b[13] or '-' }}</div></div>
+        <div class="col-md-3"><div class="info-label">Kendaraan</div><div class="info-value">{{ b[14] }} — {{ b[15] }} {{ b[16] }}</div></div>
+    </div>
+
+    <p class="section-title"><i class="bi bi-speedometer me-2"></i>Data Kilometer</p>
+    <div class="row g-3 mb-4 align-items-end">
+        <div class="col-md-3"><div class="info-label">KM Sebelum Pengisian</div><div class="info-value">{{ b[5] }} km</div></div>
+        <div class="col-md-3"><div class="info-label">KM Setelah Pengisian</div><div class="info-value">{{ b[6] }} km</div></div>
+        <div class="col-md-3"><div class="info-label mb-1">Selisih KM</div><div class="km-result">{{ b[7] }} km</div></div>
+    </div>
+
+    <p class="section-title"><i class="bi bi-fuel-pump me-2"></i>Data Bahan Bakar</p>
+    <div class="row g-3 mb-4">
+        <div class="col-md-3"><div class="info-label">Lokasi Kebun</div><div class="info-value">{{ b[17] or '-' }}</div></div>
+        <div class="col-md-3"><div class="info-label">Jenis BBM</div><div class="info-value">{{ b[10] or '-' }}</div></div>
+        <div class="col-md-3"><div class="info-label">Jumlah BBM</div><div class="info-value">{{ b[11] }} Liter</div></div>
+        <div class="col-md-3"><div class="info-label">Koordinat Lokasi</div><div class="info-value">{{ b[9] or '-' }}</div></div>
+    </div>
+
+    <p class="section-title"><i class="bi bi-camera me-2"></i>Foto Nota / Struk</p>
+    <div class="row g-3">
+        <div class="col-md-4">
+            {% if b[12] %}<img src="{{ url_for('static', filename='uploads/bbm/' + b[12]) }}" class="foto-box">{% else %}<div class="no-foto"><i class="bi bi-image"></i></div>{% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

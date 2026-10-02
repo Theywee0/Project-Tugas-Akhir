@@ -1,0 +1,246 @@
+{% extends 'base.html' %}
+{% block title %}Laporan Perjalanan{% endblock %}
+{% block page_title %}Laporan Perjalanan{% endblock %}
+{% block topbar_icon %}bi bi-file-earmark-text-fill{% endblock %}
+
+{% block content %}
+<!-- STATISTIK RINGKASAN (3 Kartu Horizontal) -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="d-flex align-items-center gap-3">
+                <div style="width:44px;height:44px;border-radius:12px;background:var(--primary-soft);display:flex;align-items:center;justify-content:center;">
+                    <i class="bi bi-signpost-2-fill" style="font-size:1.3rem;color:var(--accent);"></i>
+                </div>
+                <div>
+                    <div class="label">Total Perjalanan</div>
+                    <div class="value">{{ "{:,}".format(stat[0]|int) if stat else 0 }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="d-flex align-items-center gap-3">
+                <div style="width:44px;height:44px;border-radius:12px;background:var(--primary-soft);display:flex;align-items:center;justify-content:center;">
+                    <i class="bi bi-speedometer" style="font-size:1.3rem;color:var(--accent);"></i>
+                </div>
+                <div>
+                    <div class="label">Total Jarak</div>
+                    <div class="value">{{ "{:,.1f}".format(stat[1]|float) if stat else 0 }} km</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="d-flex align-items-center gap-3">
+                <div style="width:44px;height:44px;border-radius:12px;background:var(--primary-soft);display:flex;align-items:center;justify-content:center;">
+                    <i class="bi bi-clock-history" style="font-size:1.3rem;color:var(--accent);"></i>
+                </div>
+                <div>
+                    <div class="label">Rata-rata</div>
+                    <div class="value">{{ "{:,.1f}".format(stat[2]|float) if stat else 0 }} km</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- FILTER BAR (Search + Bulan + Tahun) -->
+<div class="app-card mb-4">
+    <form method="GET" class="d-flex flex-wrap align-items-center gap-3">
+        <div class="fw-bold text-nowrap" style="font-size:.9rem;"><i class="bi bi-table me-1"></i>Data Perjalanan <span class="text-muted fw-normal">({{ data|length }} data)</span></div>
+        <div class="d-flex align-items-center gap-2 ms-auto flex-wrap">
+            <input type="text" id="searchInput" class="form-control form-select-sm" placeholder="Cari Driver/Rute..." style="width:180px;" onkeyup="searchTable()">
+            <select name="bulan" class="form-select form-select-sm" style="width:145px;">
+                <option value="">Semua Bulan</option>
+                {% for i, bln in [(1,'Januari'),(2,'Februari'),(3,'Maret'),(4,'April'),(5,'Mei'),(6,'Juni'),(7,'Juli'),(8,'Agustus'),(9,'September'),(10,'Oktober'),(11,'November'),(12,'Desember')] %}
+                <option value="{{ i }}" {% if bulan==i|string %}selected{% endif %}>{{ bln }}</option>
+                {% endfor %}
+            </select>
+            <select name="tahun" class="form-select form-select-sm" style="width:125px;">
+                <option value="">Semua Tahun</option>
+                {% for y in range(2023, 2028) %}
+                <option value="{{ y }}" {% if tahun==y|string %}selected{% endif %}>{{ y }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-success btn-sm px-3"><i class="bi bi-search me-1"></i>Filter</button>
+            <a href="{{ url_for('laporan.laporan_perjalanan') }}" class="btn btn-outline-secondary btn-sm px-3">Reset</a>
+        </div>
+    </form>
+</div>
+
+<!-- TABEL DATA PERJALANAN -->
+<div class="app-card p-0">
+    <div class="d-flex justify-content-between align-items-center px-4 pt-3 pb-2">
+        <p class="card-title mb-0"><i class="bi bi-list-ul me-1"></i> Data Perjalanan</p>
+    </div>
+    <div class="table-responsive">
+        <table class="table align-middle mb-0" id="tabelPerjalanan">
+            <thead>
+                <tr>
+                    <th class="ps-3" style="width:45px;">NO</th>
+                    <th>WAKTU PERJALANAN</th>
+                    <th>DRIVER & KENDARAAN</th>
+                    <th>RUTE (ASAL → TUJUAN)</th>
+                    <th>RINCIAN JARAK</th>
+                    <th>PENUMPANG</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% if data %}{% for p in data %}
+                <tr class="data-row" {% if loop.index > 10 %}style="display: none;"{% endif %}>
+                    <td class="ps-3 row-num"></td>
+                    <td>
+                        <strong>{{ p[1].strftime('%d %b %Y') if p[1] else '-' }}</strong><br>
+                        <small class="text-muted">{{ p[2] }} WIB</small>
+                    </td>
+                    <td>
+                        <strong>{{ p[3] or '-' }}</strong><br>
+                        <small class="text-muted">{{ p[4] }} {{ p[5] }} {{ p[6] }}</small>
+                    </td>
+                    <td>
+                        <span class="fw-semibold">{{ p[7] or '-' }}</span>
+                        <i class="bi bi-arrow-right mx-1 text-muted"></i>
+                        <span class="fw-semibold">{{ p[8] or '-' }}</span>
+                    </td>
+                    <td>
+                        <strong style="color:var(--accent);">{{ "{:,.1f}".format(p[11]|float) }} km</strong><br>
+                        <small class="text-muted">Odo: {{ "{:,.0f}".format(p[9]|float) }} - {{ "{:,.0f}".format(p[10]|float) }}</small>
+                    </td>
+                    <td>
+                        {% if p[12] %}
+                            {% set names = p[12].split(',') %}
+                            {% if names|length > 2 %}
+                                {{ names[:2]|join(', ') }},<br><small class="text-muted">+{{ names|length - 2 }} lainnya...</small>
+                            {% else %}
+                                {{ p[12] }}
+                            {% endif %}
+                        {% else %}
+                            <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}{% else %}
+                <tr><td colspan="6"><div class="empty-state"><i class="bi bi-inbox"></i>Belum ada data perjalanan.</div></td></tr>
+            {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination Controls -->
+    <div class="d-flex justify-content-between align-items-center px-4 py-3 border-top" id="paginationControls">
+        <div class="text-muted small" id="pageInfo">Menampilkan 0 data</div>
+        <ul class="pagination pagination-sm mb-0" id="paginationUL"></ul>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    initPagination();
+});
+
+// Pagination State
+let currentPage = 1;
+const rowsPerPage = 10;
+let filteredRows = [];
+
+function initPagination() {
+    const tbody = document.getElementById('tabelPerjalanan');
+    if (!tbody) return;
+    const allRows = Array.from(tbody.querySelectorAll('tr.data-row'));
+    if (allRows.length === 0) return;
+    window.allTableRows = allRows;
+    filteredRows = allRows;
+    // Number rows
+    filteredRows.forEach((row, i) => { row.querySelector('.row-num').textContent = i + 1; });
+    renderPage();
+    renderPagination();
+}
+
+function searchTable() {
+    const query = document.getElementById('searchInput').value.toLowerCase();
+    if (!window.allTableRows) return;
+
+    filteredRows = window.allTableRows.filter(row => row.textContent.toLowerCase().includes(query));
+    // Re-number
+    filteredRows.forEach((row, i) => { row.querySelector('.row-num').textContent = i + 1; });
+    // Hide non-matching
+    window.allTableRows.forEach(r => r.style.display = 'none');
+    currentPage = 1;
+    renderPage();
+    renderPagination();
+}
+
+function renderPage() {
+    // Hide all
+    if (window.allTableRows) window.allTableRows.forEach(r => r.style.display = 'none');
+    const start = (currentPage - 1) * rowsPerPage;
+    const end = start + rowsPerPage;
+    filteredRows.slice(start, end).forEach(r => r.style.display = '');
+    const info = document.getElementById('pageInfo');
+    if (info) {
+        if (filteredRows.length === 0) {
+            info.textContent = 'Tidak ada data ditemukan.';
+        } else {
+            info.textContent = `Menampilkan ${start + 1} - ${Math.min(end, filteredRows.length)} dari ${filteredRows.length} data`;
+        }
+    }
+}
+
+function renderPagination() {
+    const ul = document.getElementById('paginationUL');
+    if (!ul) return;
+    ul.innerHTML = '';
+    const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
+    if (totalPages <= 1) return;
+
+    function addPage(label, page, isActive, isDisabled) {
+        const li = document.createElement('li');
+        li.className = `page-item ${isActive ? 'active' : ''} ${isDisabled ? 'disabled' : ''}`;
+        li.innerHTML = `<a class="page-link" href="#" onclick="changePage(${page}); return false;">${label}</a>`;
+        ul.appendChild(li);
+    }
+    function addEllipsis() {
+        const li = document.createElement('li');
+        li.className = 'page-item disabled';
+        li.innerHTML = '<span class="page-link">…</span>';
+        ul.appendChild(li);
+    }
+
+    // Prev
+    addPage('«', currentPage - 1, false, currentPage === 1);
+
+    // Smart page numbers: always show first, last, and 2 neighbors of current
+    const neighbors = 1;
+    const pages = new Set();
+    pages.add(1);
+    pages.add(totalPages);
+    for (let i = currentPage - neighbors; i <= currentPage + neighbors; i++) {
+        if (i >= 1 && i <= totalPages) pages.add(i);
+    }
+    const sorted = Array.from(pages).sort((a, b) => a - b);
+
+    let prev = 0;
+    for (const p of sorted) {
+        if (p - prev > 1) addEllipsis();
+        addPage(p, p, p === currentPage, false);
+        prev = p;
+    }
+
+    // Next
+    addPage('»', currentPage + 1, false, currentPage === totalPages);
+}
+
+window.changePage = function(page) {
+    const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
+    if (page < 1 || page > totalPages) return;
+    currentPage = page;
+    renderPage();
+    renderPagination();
+};
+</script>
+{% endblock %}

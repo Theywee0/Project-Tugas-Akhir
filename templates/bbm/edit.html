@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import koordinat_gps %}
+{% block title %}Edit Pengisian BBM{% endblock %}
+{% block page_title %}Edit Pengisian BBM{% endblock %}
+{% block topbar_icon %}bi bi-pencil-square{% endblock %}
+{% block head_extra %}
+
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <p class="subtitle mb-0">Perbarui data pengisian bahan bakar.</p>
+    <a href="{{ url_for('bbm.list_bbm') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Kembali</a>
+</div>
+<div class="app-card">
+    <form method="POST" enctype="multipart/form-data">
+        <p class="section-title"><i class="bi bi-calendar me-2"></i>Waktu & Petugas</p>
+        <div class="row g-3 mb-4">
+            <div class="col-md-3"><label class="form-label">Tanggal <span class="req">*</span></label><input type="date" name="Tanggal" class="form-control" value="{{ tanggal }}" required></div>
+            <div class="col-md-3"><label class="form-label">Jam <span class="req">*</span></label><input type="time" name="Jam" class="form-control" value="{{ jam }}" required></div>
+            {% if session['role']=='kepala_operasional_gs' %}
+            <div class="col-md-3"><label class="form-label">Driver <span class="req">*</span></label>
+                <select name="Id_Driver" class="form-select" required><option value="">-- Pilih Driver --</option>{% for d in drivers %}<option value="{{ d[0] }}" {% if d[0]==b[3] %}selected{% endif %}>{{ d[1] }}</option>{% endfor %}</select>
+            </div>
+            {% endif %}
+            <div class="col-md-3"><label class="form-label">Kendaraan <span class="req">*</span></label>
+                <select name="Id_Kendaraan" id="selKendaraan" class="form-select select2-searchable" data-search-placeholder="Cari plat atau merek..." required onchange="isiJenisBBM()"><option value="">-- Pilih Kendaraan --</option>{% for k in kendaraans %}<option value="{{ k[0] }}" data-bbm1="{{ k[4] }}" data-bbm2="{{ k[5] }}" data-bbm3="{{ k[6] }}" data-kapasitas="{{ k[7] or '' }}" {% if k[0]==b[4] %}selected{% endif %}>{{ k[1] }} - {{ k[2] }} {{ k[3] }}</option>{% endfor %}</select>
+            </div>
+        </div>
+
+        <p class="section-title"><i class="bi bi-speedometer me-2"></i>Data Kilometer</p>
+        <div class="row g-3 mb-4">
+            <div class="col-md-4"><label class="form-label">KM Terakhir Isi BBM <span class="req">*</span></label><input type="number" name="Km_Awal" id="kmAwal" class="form-control" step="0.1" min="0" value="{{ b[5] }}" required oninput="hitungKM()"></div>
+            <div class="col-md-4"><label class="form-label">KM Odometer Saat Ini <span class="req">*</span></label><input type="number" name="Km_Akhir" id="kmAkhir" class="form-control" step="0.1" min="0" value="{{ b[6] }}" required oninput="hitungKM()"></div>
+            <div class="col-md-4"><label class="form-label">Selisih KM</label><div class="form-control bg-light fw-bold text-success" id="hasilKM">0 km</div></div>
+        </div>
+
+        <p class="section-title"><i class="bi bi-fuel-pump me-2"></i>Data BBM</p>
+        <div class="row g-3 mb-4">
+            <div class="col-md-4"><label class="form-label">Lokasi Pengisian (Estate / Kebun) <span class="req">*</span></label>
+                <select name="Id_Kebun" class="form-select select2-searchable" data-search-placeholder="Ketik nama lokasi..." required><option value="">-- Pilih Lokasi Pengisian --</option>{% for kb in kebuns %}<option value="{{ kb[0] }}" {% if kb[0]==b[8] %}selected{% endif %}>{{ kb[1] }}</option>{% endfor %}</select>
+            </div>
+            <div class="col-md-4"><label class="form-label">Koordinat Lokasi <span class="req">*</span></label>{{ koordinat_gps(b[9]) }}</div>
+            <div class="col-md-4"><label class="form-label">Jenis BBM <span class="req">*</span></label>
+                <select name="Jenis_BBM" id="selJenisBBM" class="form-select" required><option value="">-- Pilih Jenis BBM --</option></select>
+            </div>
+            <div class="col-md-4"><label class="form-label">Jumlah BBM (Liter) <span class="req">*</span></label><input type="number" name="Jumlah_BBM" class="form-control" step="0.1" min="0" value="{{ b[11] }}" required></div>
+            <div class="col-md-4"><label class="form-label">Foto Nota / Struk <span class="req">*</span></label><input type="file" name="Foto_Nota" class="form-control" accept="image/*" onchange="previewFoto(this,'prevNota')" {% if not b[12] %}required{% endif %}>
+                {% if b[12] %}<img id="prevNota" class="foto-preview" src="{{ url_for('static', filename='uploads/bbm/' ~ b[12]) }}">{% else %}<img id="prevNota" class="foto-preview" style="display:none;">{% endif %}
+                <small class="text-muted">Kosongkan jika tidak ingin mengubah foto.</small>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-success px-4"><i class="bi bi-check-circle me-2"></i>Perbarui Data BBM</button>
+            <a href="{{ url_for('bbm.list_bbm') }}" class="btn btn-outline-secondary px-4">Batal</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const currentBBM = "{{ b[10] or '' }}";
+window.addEventListener('load', () => {
+    isiJenisBBM(currentBBM);
+});
+</script>
+{% endblock %}

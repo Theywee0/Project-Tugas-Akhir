@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import status_badge %}
+{% block title %}Detail Maintenance{% endblock %}
+{% block page_title %}Detail Maintenance #{{ maint[0] }}{% endblock %}
+{% block topbar_icon %}bi bi-tools{% endblock %}
+{% block head_extra %}
+
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <p class="subtitle mb-0">Detail kegiatan perawatan / perbaikan kendaraan.</p>
+    <div class="d-flex gap-2">
+        {% if session['role']=='kepala_operasional_gs' or maint[15]=='Belum' %}
+        <a href="{{ url_for('maintenance.edit_maintenance', id=maint[0]) }}" class="btn btn-warning btn-sm"><i class="bi bi-pencil me-1"></i>Edit</a>
+        {% endif %}
+        <a href="{{ url_for('maintenance.list_maintenance') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Kembali</a>
+    </div>
+</div>
+<div class="app-card mb-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <span>Status Verifikasi: {{ status_badge(maint[15]) }}</span>
+    {% if maint[15]=='Terverifikasi' %}
+    <small class="text-muted"><i class="bi bi-person-check me-1"></i>Diverifikasi oleh <strong>{{ maint[17] or 'Sistem' }}</strong>{% if maint[16] %} pada {{ maint[16] }}{% endif %}</small>
+    {% else %}
+    <small class="text-muted"><i class="bi bi-info-circle me-1"></i>Data masih dapat diedit oleh driver pemilik.</small>
+    {% endif %}
+</div>
+<!-- maint: 0=ID,1=ID_Kendaraan,2=ID_Driver,3=Tanggal,4=KM,5=Lokasi,6=Koordinat,7=Keluhan,8=Jml_Keluhan,9=Spareparts,10=Jml_Spareparts,11=Foto_Perbaikan,12=Foto_Nota,13=Nama_Driver,14=No_Polisi -->
+<div class="app-card">
+    <p class="section-title"><i class="bi bi-info-circle me-2"></i>Informasi Umum</p>
+    <div class="row g-3 mb-4">
+        <div class="col-md-3"><div class="info-label">Tanggal</div><div class="info-value">{{ maint[3] }}</div></div>
+        <div class="col-md-3"><div class="info-label">Driver</div><div class="info-value">{{ maint[13] or '-' }}</div></div>
+        <div class="col-md-3"><div class="info-label">Kendaraan</div><div class="info-value">{{ maint[14] or '-' }}</div></div>
+        <div class="col-md-3"><div class="info-label">KM Kendaraan</div><div class="info-value">{{ maint[4] }} km</div></div>
+        <div class="col-md-6"><div class="info-label">Lokasi Maintenance</div><div class="info-value">{{ maint[5] or '-' }}</div></div>
+        <div class="col-md-6"><div class="info-label">Koordinat</div><div class="info-value">{{ maint[6] or '-' }}</div></div>
+    </div>
+
+    <p class="section-title"><i class="bi bi-exclamation-triangle me-2"></i>Keluhan & Sparepart</p>
+    <div class="row g-3 mb-4">
+        <div class="col-md-6"><div class="info-label mb-2">Daftar Keluhan ({{ maint[8] }})</div>
+            <div class="list-box"><ul>{% for k in maint[7].split('\n') %}{% if k.strip() %}<li>{{ k.strip() }}</li>{% endif %}{% endfor %}</ul></div>
+        </div>
+        <div class="col-md-6"><div class="info-label mb-2">Sparepart Diganti ({{ maint[10] }})</div>
+            <div class="list-box"><ul>{% if maint[9] %}{% for s in maint[9].split('\n') %}{% if s.strip() %}<li>{{ s.strip() }}</li>{% endif %}{% endfor %}{% else %}<li class="text-muted">Tidak ada sparepart diganti</li>{% endif %}</ul></div>
+        </div>
+    </div>
+
+    <p class="section-title"><i class="bi bi-camera me-2"></i>Dokumentasi Foto</p>
+    <div class="row g-3">
+        <div class="col-md-4"><div class="info-label mb-2">Foto Perbaikan</div>{% if maint[11] %}<img src="{{ url_for('static', filename='uploads/maintenance/' + maint[11]) }}" class="foto-box">{% else %}<div class="no-foto"><i class="bi bi-image"></i></div>{% endif %}</div>
+        <div class="col-md-4"><div class="info-label mb-2">Foto Nota Sparepart</div>{% if maint[12] %}<img src="{{ url_for('static', filename='uploads/maintenance/' + maint[12]) }}" class="foto-box">{% else %}<div class="no-foto"><i class="bi bi-image"></i></div>{% endif %}</div>
+    </div>
+</div>
+{% endblock %}

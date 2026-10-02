@@ -1,0 +1,59 @@
+{# ===================================================================
+   Macro UI yang dipakai bersama lintas modul agar konsisten & tanpa duplikasi.
+   =================================================================== #}
+
+{# Badge status verifikasi sebuah data operasional. #}
+{% macro status_badge(status) %}
+{%- if status == 'Terverifikasi' -%}
+<span class="badge bg-success"><i class="bi bi-patch-check-fill me-1"></i>Terverifikasi</span>
+{%- else -%}
+<span class="badge bg-warning text-dark"><i class="bi bi-hourglass-split me-1"></i>Belum Diverifikasi</span>
+{%- endif -%}
+{% endmacro %}
+
+{# Tombol aksi verifikasi/batal-verifikasi (khusus admin).
+   ep_verif & ep_batal = nama endpoint url_for; id = primary key record. #}
+{% macro tombol_verifikasi(status, ep_verif, ep_batal, id) %}
+{%- if status == 'Terverifikasi' -%}
+<a href="{{ url_for(ep_batal, id=id) }}" class="btn btn-outline-secondary btn-sm btn-icon"
+   title="Batalkan verifikasi" onclick="return confirm('Batalkan verifikasi? Data akan dapat diedit kembali oleh driver pemilik.')"><i class="bi bi-arrow-counterclockwise"></i></a>
+{%- else -%}
+<a href="{{ url_for(ep_verif, id=id) }}" class="btn btn-success btn-sm btn-icon"
+   title="Verifikasi data" onclick="return confirm('Verifikasi data ini? Setelah diverifikasi, driver tidak dapat lagi mengeditnya.')"><i class="bi bi-patch-check"></i></a>
+{%- endif -%}
+{% endmacro %}
+
+{# Dropdown perjalanan yang informatif & dapat dicari (searchable combobox).
+   Value yang dikirim ke server tetap ID_Perjalanan (relasi DB tidak berubah).
+   `perjalanans` per baris: (ID, Tanggal, No_Polisi, Asal, Tujuan, Nama_Driver).
+   Inisialisasi & interaksi ditangani JS generik di base.html (.searchable-select). #}
+{# Field Koordinat dengan tombol "Ambil Lokasi Otomatis" (Geolocation API).
+   Value tetap disimpan ke kolom Koordinat (format "latitude, longitude") —
+   tidak mengubah struktur DB. Input readonly; bila GPS gagal hanya tampil pesan
+   (tanpa input manual). Interaksi ditangani JS generik di base.html (.koordinat-gps). #}
+{% macro koordinat_gps(value='') %}
+<div class="koordinat-gps">
+    <div class="input-group input-group-sm">
+        <input type="text" name="Koordinat" class="form-control kg-input" value="{{ value or '' }}" placeholder="Belum ada lokasi terekam" readonly>
+        <button type="button" class="btn btn-outline-primary kg-btn"><i class="bi bi-geo-alt-fill me-1"></i>Ambil Lokasi</button>
+    </div>
+    <small class="text-muted kg-msg"><i class="bi bi-info-circle me-1"></i>Klik "Ambil Lokasi" untuk merekam koordinat otomatis via GPS perangkat.</small>
+</div>
+{% endmacro %}
+
+{% macro pilih_perjalanan(perjalanans, selected_id=None) %}
+<div class="searchable-select">
+    <input type="hidden" name="ID_Perjalanan" value="{{ selected_id if selected_id is not none else '' }}">
+    <input type="text" class="form-control ss-input" placeholder="-- Pilih perjalanan (opsional) --" autocomplete="off" readonly>
+    <div class="ss-panel">
+        <input type="text" class="form-control form-control-sm ss-search" placeholder="Cari: tanggal / no. polisi / asal / tujuan / driver…" autocomplete="off">
+        <div class="ss-list">
+            <div class="ss-item" data-value="" data-text="">-- Tanpa perjalanan (opsional) --</div>
+            {% for p in perjalanans %}
+            {%- set lbl = '#' ~ p[0] ~ ' · ' ~ p[1] ~ ' · ' ~ (p[2] or '—') ~ ' · ' ~ (p[3] or '—') ~ ' → ' ~ (p[4] or '—') ~ ' · ' ~ (p[5] or '—') -%}
+            <div class="ss-item" data-value="{{ p[0] }}" data-text="{{ lbl }}">{{ lbl }}</div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endmacro %}

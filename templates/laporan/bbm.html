@@ -1,0 +1,276 @@
+{% extends 'base.html' %}
+{% block title %}Laporan BBM{% endblock %}
+{% block page_title %}Laporan BBM{% endblock %}
+{% block topbar_icon %}bi bi-bar-chart-fill{% endblock %}
+{% block head_extra %}
+<script src="{{ url_for('static', filename='vendor/chart/chart.umd.min.js') }}"></script>
+{% endblock %}
+
+{% block content %}
+<!-- STATISTIK RINGKASAN (3 Kartu Horizontal) -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="d-flex align-items-center gap-3">
+                <div style="width:44px;height:44px;border-radius:12px;background:var(--primary-soft);display:flex;align-items:center;justify-content:center;">
+                    <i class="bi bi-fuel-pump" style="font-size:1.3rem;color:var(--accent);"></i>
+                </div>
+                <div>
+                    <div class="label">Total Pengisian</div>
+                    <div class="value">{{ "{:,}".format(total[0]|int) if total else 0 }} <small class="fs-6 text-muted">kali</small></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="d-flex align-items-center gap-3">
+                <div style="width:44px;height:44px;border-radius:12px;background:var(--primary-soft);display:flex;align-items:center;justify-content:center;">
+                    <i class="bi bi-droplet-half" style="font-size:1.3rem;color:var(--accent);"></i>
+                </div>
+                <div>
+                    <div class="label">Total BBM</div>
+                    <div class="value">{{ "{:,.1f}".format(total[1]|float) if total else 0 }} L</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="d-flex align-items-center gap-3">
+                <div style="width:44px;height:44px;border-radius:12px;background:var(--primary-soft);display:flex;align-items:center;justify-content:center;">
+                    <i class="bi bi-speedometer2" style="font-size:1.3rem;color:var(--accent);"></i>
+                </div>
+                <div>
+                    <div class="label">Total Jarak (dari BBM)</div>
+                    <div class="value">{{ "{:,.1f}".format(total[2]|float) if total else 0 }} km</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- FILTER BAR (Search + Bulan + Tahun) -->
+<div class="app-card mb-4">
+    <form method="GET" class="d-flex flex-wrap align-items-center gap-3">
+        <div class="d-flex align-items-center gap-2 ms-auto flex-wrap">
+            <input type="text" id="searchInput" class="form-control form-select-sm" placeholder="Cari Driver/Rute..." style="width:180px;" onkeyup="searchTable()">
+            <select name="bulan" class="form-select form-select-sm" style="width:145px;">
+                <option value="">Semua Bulan</option>
+                {% for i, bln in [(1,'Januari'),(2,'Februari'),(3,'Maret'),(4,'April'),(5,'Mei'),(6,'Juni'),(7,'Juli'),(8,'Agustus'),(9,'September'),(10,'Oktober'),(11,'November'),(12,'Desember')] %}
+                <option value="{{ i }}" {% if bulan==i|string %}selected{% endif %}>{{ bln }}</option>
+                {% endfor %}
+            </select>
+            <select name="tahun" class="form-select form-select-sm" style="width:125px;">
+                <option value="">Semua Tahun</option>
+                {% for y in range(2023, 2028) %}
+                <option value="{{ y }}" {% if tahun==y|string %}selected{% endif %}>{{ y }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-success btn-sm px-3"><i class="bi bi-search me-1"></i>Filter</button>
+            <a href="{{ url_for('laporan.laporan_bbm') }}" class="btn btn-outline-secondary btn-sm px-3">Reset</a>
+        </div>
+    </form>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-lg-7">
+        <div class="app-card h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <p class="card-title mb-0"><i class="bi bi-bar-chart"></i> Total Pengisian BBM/Kendaraan</p>
+                <span class="text-muted small">Tampilkan Berdasarkan Total BBM (L)</span>
+            </div>
+            <div style="height:250px;">
+                <canvas id="chartBBMKend"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="app-card h-100">
+            <p class="card-title mb-3"><i class="bi bi-list-columns"></i> Performa per Kendaraan</p>
+            <div class="table-responsive" style="max-height:260px;overflow-y:auto;">
+                <table class="table table-sm align-middle">
+                    <thead class="table-light"><tr><th>KENDARAAN</th><th>BBM (L)</th><th>KM</th><th>RASIO</th></tr></thead>
+                    <tbody>
+                    {% for sk in stat_kendaraan %}
+                        <tr>
+                            <td><strong>{{ sk[0] }}</strong><br><small class="text-muted">{{ sk[1] }} {{ sk[2] }}</small></td>
+                            <td>{{ "{:,.0f}".format(sk[4]|float) }}</td>
+                            <td>{{ "{:,.0f}".format(sk[5]|float) }}</td>
+                            <td>{% set r = sk[6]|float %}<span class="badge {% if r <= 0.12 %}bg-success{% elif r <= 0.18 %}bg-warning text-dark{% else %}bg-danger{% endif %}">{{ "%.3f"|format(r) }}</span></td>
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="4" class="text-center text-muted">Belum ada data.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- TABEL RIWAYAT PENGISIAN BBM -->
+<div class="app-card p-0">
+    <div class="d-flex justify-content-between align-items-center px-4 pt-3 pb-2">
+        <p class="card-title mb-0"><i class="bi bi-list-ul me-1"></i> Riwayat Pengisian BBM</p>
+        <span class="text-muted" style="font-size:.82rem;">{{ data|length }} data</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table align-middle mb-0" id="tabelBBM">
+            <thead>
+                <tr>
+                    <th class="ps-3" style="width:45px;">NO</th>
+                    <th>WAKTU PENGISIAN</th>
+                    <th>DRIVER</th>
+                    <th>KENDARAAN</th>
+                    <th>LOKASI</th>
+                    <th>JENIS BBM</th>
+                    <th>JUMLAH (L)</th>
+                    <th>KM TEMPUH</th>
+                    <th>RASIO</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% if data %}{% for b in data %}
+                {% set rasio = (b[9]|float / b[12]|float) if b[12]|float > 0 else 0 %}
+                <tr class="data-row" {% if loop.index > 10 %}style="display: none;"{% endif %}>
+                    <td class="ps-3 row-num"></td>
+                    <td>
+                        <strong>{{ b[1].strftime('%Y-%m-%d') if b[1] else '-' }}</strong><br>
+                        <small class="text-muted">{{ b[2] }}</small>
+                    </td>
+                    <td>{{ b[3] or '-' }}</td>
+                    <td>
+                        <strong>{{ b[4] }}</strong> {{ b[5] }} {{ b[6] }}
+                    </td>
+                    <td>{{ b[7] or '-' }}</td>
+                    <td><span class="badge bg-warning text-dark">{{ b[8] }}</span></td>
+                    <td><strong>{{ "{:,.1f}".format(b[9]|float) }} L</strong></td>
+                    <td>{{ "{:,.1f}".format(b[12]|float) }} km</td>
+                    <td><span class="badge {% if rasio <= 0.12 %}bg-success{% elif rasio <= 0.18 %}bg-warning text-dark{% else %}bg-danger{% endif %}">{% if rasio > 0 %}{{ "%.3f"|format(rasio) }}{% else %}-{% endif %}</span></td>
+                </tr>
+            {% endfor %}{% else %}
+                <tr><td colspan="9"><div class="empty-state"><i class="bi bi-inbox"></i>Belum ada data pengisian BBM.</div></td></tr>
+            {% endif %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Pagination Controls -->
+    <div class="d-flex justify-content-between align-items-center px-4 py-3 border-top" id="paginationControls">
+        <div class="text-muted small" id="pageInfo">Menampilkan 0 data</div>
+        <ul class="pagination pagination-sm mb-0" id="paginationUL"></ul>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Chart BBM
+const labelsKend = {{ grafik_label|safe }};
+const dataKend   = {{ grafik_data|safe }};
+new Chart(document.getElementById('chartBBMKend'), {
+    type: 'bar',
+    data: { labels: labelsKend, datasets: [{ label: 'Total BBM (L)', data: dataKend, backgroundColor: '#a8d5b5', borderRadius: 4, borderSkipped: false }] },
+    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+        scales: { x: { grid: { color: '#f0f0f0' } }, y: { grid: { display: false } } } }
+});
+
+// Pagination Logic
+document.addEventListener('DOMContentLoaded', function() {
+    initPagination();
+});
+
+let currentPage = 1;
+const rowsPerPage = 10;
+let filteredRows = [];
+
+function initPagination() {
+    const tbody = document.getElementById('tabelBBM');
+    if (!tbody) return;
+    const allRows = Array.from(tbody.querySelectorAll('tr.data-row'));
+    if (allRows.length === 0) return;
+    window.allTableRows = allRows;
+    filteredRows = allRows;
+    filteredRows.forEach((row, i) => { row.querySelector('.row-num').textContent = i + 1; });
+    renderPage();
+    renderPagination();
+}
+
+function searchTable() {
+    const query = document.getElementById('searchInput').value.toLowerCase();
+    if (!window.allTableRows) return;
+
+    filteredRows = window.allTableRows.filter(row => row.textContent.toLowerCase().includes(query));
+    filteredRows.forEach((row, i) => { row.querySelector('.row-num').textContent = i + 1; });
+    window.allTableRows.forEach(r => r.style.display = 'none');
+    currentPage = 1;
+    renderPage();
+    renderPagination();
+}
+
+function renderPage() {
+    if (window.allTableRows) window.allTableRows.forEach(r => r.style.display = 'none');
+    const start = (currentPage - 1) * rowsPerPage;
+    const end = start + rowsPerPage;
+    filteredRows.slice(start, end).forEach(r => r.style.display = '');
+    const info = document.getElementById('pageInfo');
+    if (info) {
+        if (filteredRows.length === 0) {
+            info.textContent = 'Tidak ada data ditemukan.';
+        } else {
+            info.textContent = `Menampilkan ${start + 1} - ${Math.min(end, filteredRows.length)} dari ${filteredRows.length} data`;
+        }
+    }
+}
+
+function renderPagination() {
+    const ul = document.getElementById('paginationUL');
+    if (!ul) return;
+    ul.innerHTML = '';
+    const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
+    if (totalPages <= 1) return;
+
+    function addPage(label, page, isActive, isDisabled) {
+        const li = document.createElement('li');
+        li.className = `page-item ${isActive ? 'active' : ''} ${isDisabled ? 'disabled' : ''}`;
+        li.innerHTML = `<a class="page-link" href="#" onclick="changePage(${page}); return false;">${label}</a>`;
+        ul.appendChild(li);
+    }
+    function addEllipsis() {
+        const li = document.createElement('li');
+        li.className = 'page-item disabled';
+        li.innerHTML = '<span class="page-link">…</span>';
+        ul.appendChild(li);
+    }
+
+    addPage('«', currentPage - 1, false, currentPage === 1);
+
+    const neighbors = 1;
+    const pages = new Set();
+    pages.add(1);
+    pages.add(totalPages);
+    for (let i = currentPage - neighbors; i <= currentPage + neighbors; i++) {
+        if (i >= 1 && i <= totalPages) pages.add(i);
+    }
+    const sorted = Array.from(pages).sort((a, b) => a - b);
+
+    let prev = 0;
+    for (const p of sorted) {
+        if (p - prev > 1) addEllipsis();
+        addPage(p, p, p === currentPage, false);
+        prev = p;
+    }
+
+    addPage('»', currentPage + 1, false, currentPage === totalPages);
+}
+
+window.changePage = function(page) {
+    const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
+    if (page < 1 || page > totalPages) return;
+    currentPage = page;
+    renderPage();
+    renderPagination();
+};
+</script>
+{% endblock %}

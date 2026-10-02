@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}Data Driver{% endblock %}
+{% block page_title %}Data Driver{% endblock %}
+{% block topbar_icon %}bi bi-person-badge-fill{% endblock %}
+{% block head_extra %}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <p class="subtitle mb-0">Daftar pengemudi kendaraan operasional.</p>
+    <a href="{{ url_for('driver.tambah_driver') }}" class="btn btn-success"><i class="bi bi-plus-lg me-1"></i>Tambah Driver</a>
+</div>
+
+<div class="app-card p-0">
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead><tr><th class="ps-3">No</th><th>Foto Profil</th><th>Nama Driver</th><th>Username</th><th>Kontak</th><th>Kontak Darurat</th><th>Alamat</th><th class="text-end pe-4">Aksi</th></tr></thead>
+            <tbody>
+            {% if data %}
+                {% for d in data %}
+                <tr>
+                    <td class="ps-3">{{ loop.index }}</td>
+                    <td>{% if d[6] %}<img src="{{ url_for('static', filename='uploads/driver/' + d[6]) }}" class="foto-thumb">{% else %}<div class="avatar-placeholder"><i class="bi bi-person"></i></div>{% endif %}</td>
+                    <td><strong>{{ d[2] }}</strong></td>
+                    <td><span class="badge bg-light text-dark border">{{ d[7] or '-' }}</span></td>
+                    <td>{{ d[3] or '-' }}</td>
+                    <td>{{ d[4] or '-' }}</td>
+                    <td><small>{{ d[5] or '-' }}</small></td>
+                    <td class="text-end pe-4 text-nowrap">
+                        <div class="d-flex justify-content-end gap-1">
+                            <a href="{{ url_for('driver.detail_driver', id=d[0]) }}" class="btn btn-info btn-sm btn-icon"><i class="bi bi-eye"></i></a>
+                            <a href="{{ url_for('driver.edit_driver', id=d[0]) }}" class="btn btn-warning btn-sm btn-icon"><i class="bi bi-pencil"></i></a>
+                            <a href="{{ url_for('driver.hapus_driver', id=d[0]) }}" class="btn btn-danger btn-sm btn-icon" onclick="return confirm('Yakin hapus {{ d[2] }}?')"><i class="bi bi-trash"></i></a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr><td colspan="8"><div class="empty-state"><i class="bi bi-inbox"></i>Belum ada data driver.</div></td></tr>
+            {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

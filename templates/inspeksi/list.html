@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import status_badge, tombol_verifikasi %}
+{% block title %}Data Inspeksi{% endblock %}
+{% block page_title %}Data Inspeksi{% endblock %}
+{% block topbar_icon %}bi bi-clipboard-check-fill{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <p class="subtitle mb-0">{% if session['role']=='driver' %}Riwayat inspeksi kendaraan operasional Anda.{% else %}Seluruh data inspeksi harian kendaraan.{% endif %}</p>
+    {% if session['role'] == 'driver' %}
+    <a href="{{ url_for('inspeksi.tambah_inspeksi') }}" class="btn btn-success"><i class="bi bi-plus-lg me-1"></i>Buat Inspeksi</a>
+    {% endif %}
+</div>
+
+<div class="app-card p-0">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead><tr><th class="ps-3">No</th><th>Tanggal</th><th>Driver</th><th>Kendaraan</th><th>KM</th><th>Status</th><th class="text-end pe-4">Aksi</th></tr></thead>
+            <tbody>
+            {% if data %}
+                {% for i in data %}
+                <tr>
+                    <td class="ps-3">{{ loop.index }}</td>
+                    <td>{{ i[1] }}</td>
+                    <td>{{ i[4] or '-' }}</td>
+                    <td>{{ i[5] or '-' }}</td>
+                    <td>{{ i[2] }} km</td>
+                    <td>{{ status_badge(i[7]) }}</td>
+                    <td class="text-end pe-4">
+                        <a href="{{ url_for('inspeksi.detail_inspeksi', id=i[0]) }}" class="btn btn-info btn-sm btn-icon" title="Detail"><i class="bi bi-eye"></i></a>
+                        {% if session['role']=='kepala_operasional_gs' or i[7]=='Belum' %}
+                        <a href="{{ url_for('inspeksi.edit_inspeksi', id=i[0]) }}" class="btn btn-warning btn-sm btn-icon" title="Edit"><i class="bi bi-pencil"></i></a>
+                        {% endif %}
+                        {% if session['role']=='kepala_operasional_gs' %}
+                        {{ tombol_verifikasi(i[7], 'inspeksi.verifikasi_inspeksi', 'inspeksi.batal_verifikasi_inspeksi', i[0]) }}
+                        <a href="{{ url_for('inspeksi.hapus_inspeksi', id=i[0]) }}" class="btn btn-danger btn-sm btn-icon" title="Hapus" onclick="return confirm('Yakin hapus data inspeksi ini?')"><i class="bi bi-trash"></i></a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr><td colspan="7"><div class="empty-state"><i class="bi bi-inbox"></i>Belum ada data inspeksi.</div></td></tr>
+            {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

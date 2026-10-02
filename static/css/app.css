@@ -1,0 +1,189 @@
+/* ============================================================
+   Sistem Informasi Kendaraan Operasional HPI Agro
+   Design system terpusat — dipakai oleh seluruh halaman via base.html
+   ============================================================ */
+:root {
+    --primary: #1a472a;       /* hijau perkebunan HPI Agro */
+    --primary-2: #2d6a4f;
+    --primary-soft: #e8f5e9;
+    --primary-hover: #f0f7f4;
+    --accent: #40916c;
+
+    --ink: #1f2933;
+    --ink-soft: #5b6770;
+    --muted: #8a939b;
+    --line: #e9ecef;
+    --bg: #f4f6f8;
+    --card: #ffffff;
+
+    --success: #27ae60;
+    --warning: #f39c12;
+    --danger: #e74c3c;
+    --info: #2d9cdb;
+
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 1px 3px rgba(16,24,40,.06), 0 1px 2px rgba(16,24,40,.04);
+    --shadow-md: 0 4px 16px rgba(16,24,40,.08);
+    --sidebar-w: 248px;
+    --font: 'Segoe UI', system-ui, -apple-system, 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+}
+
+* { box-sizing: border-box; }
+body {
+    margin: 0;
+    background: var(--bg);
+    font-family: var(--font);
+    color: var(--ink);
+    font-size: 15px;
+}
+
+/* ===================== SIDEBAR ===================== */
+.app-sidebar {
+    width: var(--sidebar-w);
+    height: 100vh;
+    height: 100dvh;
+    background: var(--card);
+    border-right: 1px solid var(--line);
+    position: fixed;
+    top: 0; left: 0;
+    z-index: 1040;
+    display: flex;
+    flex-direction: column;
+    transition: transform .25s ease;
+}
+.app-sidebar .brand {
+    padding: 11px 18px;
+    border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; gap: 10px;
+}
+.app-sidebar .brand .logo {
+    width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.05rem;
+}
+.app-sidebar .brand h6 { margin: 0; font-weight: 700; font-size: .88rem; color: var(--ink); line-height: 1.15; }
+.app-sidebar .brand small { color: var(--muted); font-size: .68rem; }
+
+/* Sidebar dipadatkan agar seluruh menu (termasuk Logout) muat tanpa scroll di 1366x768 */
+.app-sidebar nav { padding: 4px 0 8px; overflow-y: auto; flex: 1; }
+.nav-section { padding: 8px 20px 3px; font-size: .63rem; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); font-weight: 700; }
+.app-sidebar .nav-link {
+    color: var(--ink-soft); padding: 7px 20px; font-size: .85rem; font-weight: 500;
+    display: flex; align-items: center; gap: 11px; border-left: 3px solid transparent; transition: all .15s;
+}
+.app-sidebar .nav-link i { font-size: 1rem; width: 18px; text-align: center; }
+.app-sidebar .nav-link:hover { background: var(--primary-hover); color: var(--primary); }
+.app-sidebar .nav-link.active { background: var(--primary-soft); color: var(--primary); font-weight: 600; border-left-color: var(--primary); }
+.app-sidebar .nav-link.logout { color: var(--danger); }
+.app-sidebar .nav-link.logout:hover { background: #fdecea; }
+
+/* ===================== TOPBAR ===================== */
+.app-main { margin-left: var(--sidebar-w); min-height: 100vh; display: flex; flex-direction: column; }
+.app-topbar {
+    background: var(--card); border-bottom: 1px solid var(--line);
+    padding: 12px 28px; display: flex; justify-content: space-between; align-items: center;
+    position: sticky; top: 0; z-index: 1030;
+}
+.app-topbar .title { display: flex; align-items: center; gap: 10px; }
+.app-topbar .title h1 { font-size: 1.12rem; font-weight: 700; margin: 0; color: var(--ink); }
+.app-topbar .title i { color: var(--primary); font-size: 1.15rem; }
+.topbar-user { display: flex; align-items: center; gap: 12px; }
+.topbar-user .name { font-size: .88rem; color: var(--ink-soft); }
+.role-badge { padding: 4px 12px; border-radius: 20px; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
+.role-badge.admin { background: var(--primary-soft); color: var(--primary); }
+.role-badge.driver { background: #e7f1ff; color: #0d6efd; }
+.avatar {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--accent)); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: .82rem;
+}
+.btn-burger { display: none; border: none; background: transparent; font-size: 1.4rem; color: var(--ink); }
+
+/* ===================== CONTENT ===================== */
+@keyframes fadeInSoft {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.app-content { 
+    padding: 24px 28px; 
+    flex: 1; 
+    animation: fadeInSoft 0.35s ease-out forwards; 
+}
+.page-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
+.page-head .subtitle { color: var(--muted); font-size: .85rem; margin: 2px 0 0; }
+
+/* ===================== CARDS ===================== */
+.card { border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+.app-card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 22px 24px; }
+.app-card + .app-card { margin-top: 18px; }
+.card-title { font-weight: 700; font-size: .98rem; color: var(--ink); margin: 0 0 16px; display: flex; align-items: center; gap: 8px; }
+.card-title i { color: var(--primary); }
+
+/* Stat cards */
+.stat-card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px 20px; height: 100%; }
+.stat-card .label { font-size: .8rem; color: var(--muted); font-weight: 500; margin-bottom: 6px; }
+.stat-card .value { font-size: 1.7rem; font-weight: 700; color: var(--ink); line-height: 1.1; }
+.stat-card .change { font-size: .78rem; margin-top: 6px; }
+.stat-card .icon { font-size: 1.6rem; opacity: .28; }
+.change.up { color: var(--success); } .change.down { color: var(--danger); } .change.neutral { color: var(--muted); }
+
+/* ===================== TABLES ===================== */
+.table { margin: 0; }
+.table thead th { font-size: .76rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; border-bottom: 1px solid var(--line); padding: 12px; background: #fafbfc; }
+.table tbody td { font-size: .88rem; color: var(--ink); padding: 11px 12px; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
+.table tbody tr:hover { background: #fafbfc; }
+
+/* ===================== BADGES ===================== */
+.badge-soft { padding: 4px 11px; border-radius: 20px; font-size: .76rem; font-weight: 600; display: inline-block; }
+.badge-normal { background: var(--primary-soft); color: var(--success); }
+.badge-ringan { background: #fff8e1; color: var(--warning); }
+.badge-berat  { background: #fdecea; color: var(--danger); }
+.badge-belum  { background: #eef0f2; color: var(--muted); }
+
+/* ===================== BUTTONS ===================== */
+.btn { border-radius: var(--radius-sm); font-size: .88rem; font-weight: 600; }
+.btn-primary, .btn-success { background: var(--primary); border-color: var(--primary); }
+.btn-primary:hover, .btn-success:hover { background: var(--primary-2); border-color: var(--primary-2); }
+.btn-outline-primary { color: var(--primary); border-color: var(--primary); }
+.btn-outline-primary:hover { background: var(--primary); border-color: var(--primary); }
+.btn-icon { padding: 4px 9px; }
+
+/* ===================== FORMS ===================== */
+.form-label { font-weight: 600; font-size: .85rem; color: var(--ink-soft); margin-bottom: 5px; }
+.form-control, .form-select { border-radius: var(--radius-sm); border: 1px solid #d8dde2; font-size: .9rem; padding: 9px 12px; }
+.form-control:focus, .form-select:focus { border-color: var(--accent); box-shadow: 0 0 0 .2rem rgba(64,145,108,.18); }
+.section-title { font-weight: 700; color: var(--primary); border-bottom: 2px solid var(--primary-soft); padding-bottom: 8px; margin: 4px 0 16px; font-size: .95rem; }
+.req { color: var(--danger); }
+
+/* ===================== EMPTY / LOADING ===================== */
+.empty-state { text-align: center; color: var(--muted); padding: 48px 16px; }
+.empty-state i { font-size: 2.4rem; display: block; margin-bottom: 10px; opacity: .6; }
+.btn-loading { position: relative; pointer-events: none; opacity: .75; }
+.btn-loading .spinner-border { width: 1rem; height: 1rem; border-width: .15em; }
+
+/* ===================== SEARCHABLE SELECT (combobox) ===================== */
+.searchable-select { position: relative; }
+.searchable-select .ss-input { cursor: pointer; background: #fff; }
+.searchable-select .ss-panel { display: none; position: absolute; z-index: 40; left: 0; right: 0;
+    top: calc(100% + 4px); background: #fff; border: 1px solid var(--line); border-radius: 10px;
+    box-shadow: var(--shadow-md); padding: 8px; }
+.searchable-select .ss-panel.show { display: block; }
+.searchable-select .ss-list { max-height: 240px; overflow-y: auto; margin-top: 6px; }
+.searchable-select .ss-item { padding: 7px 10px; border-radius: 6px; cursor: pointer; font-size: .84rem; color: var(--ink); }
+.searchable-select .ss-item:hover { background: var(--primary-soft); }
+.searchable-select .ss-empty { padding: 10px; font-size: .82rem; color: var(--muted); text-align: center; }
+
+/* ===================== RESPONSIVE ===================== */
+.sidebar-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 1035; }
+@media (max-width: 991.98px) {
+    body.sidebar-open { overflow: hidden; }
+    .app-sidebar { transform: translateX(-100%); }
+    .app-sidebar.open { transform: translateX(0); }
+    .app-main { margin-left: 0; }
+    .btn-burger { display: inline-block; }
+    .sidebar-backdrop.show { display: block; }
+    .app-content { padding: 18px 16px; }
+    .app-topbar { padding: 12px 16px; }
+}

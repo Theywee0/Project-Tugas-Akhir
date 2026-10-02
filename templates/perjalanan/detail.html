@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import status_badge %}
+{% block title %}Detail Perjalanan{% endblock %}
+{% block page_title %}Detail Perjalanan{% endblock %}
+{% block topbar_icon %}bi bi-eye{% endblock %}
+{% block head_extra %}
+
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <p class="subtitle mb-0">Informasi lengkap perjalanan kendaraan.</p>
+    <div class="d-flex gap-2">
+        {% if session['role']=='kepala_operasional_gs' or p[19]=='Belum' %}
+        <a href="{{ url_for('perjalanan.edit_perjalanan', id=p[0]) }}" class="btn btn-warning btn-sm"><i class="bi bi-pencil me-1"></i>Edit</a>
+        {% endif %}
+        <a href="{{ url_for('perjalanan.list_perjalanan') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Kembali</a>
+    </div>
+</div>
+<div class="app-card mb-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <span>Status Verifikasi: {{ status_badge(p[19]) }}</span>
+    {% if p[19]=='Terverifikasi' %}
+    <small class="text-muted"><i class="bi bi-person-check me-1"></i>Diverifikasi oleh <strong>{{ p[21] or 'Sistem' }}</strong>{% if p[20] %} pada {{ p[20] }}{% endif %}</small>
+    {% else %}
+    <small class="text-muted"><i class="bi bi-info-circle me-1"></i>Data masih dapat diedit oleh driver pemilik.</small>
+    {% endif %}
+</div>
+<!-- p: 0=ID,1=Tanggal,2=Jam,3=ID_Driver,4=ID_Kendaraan,5=KM_Awal,6=KM_Akhir,7=Jumlah_KM,8=Foto_Odometer,9=Kebun_Asal,10=Kebun_Tujuan,11=Nama_Penumpang,12=Keterangan,13=Nama_Driver,14=No_Polisi,15=Merek,16=Tipe,17=Kebun_Asal_Nama,18=Kebun_Tujuan_Nama -->
+<div class="app-card">
+    <p class="section-title"><i class="bi bi-calendar me-2"></i>Waktu & Petugas</p>
+    <div class="row g-3 mb-4">
+        <div class="col-md-3"><div class="info-label">Tanggal</div><div class="info-value">{{ p[1] }}</div></div>
+        <div class="col-md-3"><div class="info-label">Jam</div><div class="info-value">{{ p[2] }}</div></div>
+        <div class="col-md-3"><div class="info-label">Driver</div><div class="info-value">{{ p[13] or '-' }}</div></div>
+        <div class="col-md-3"><div class="info-label">Kendaraan</div><div class="info-value">{{ p[14] }} — {{ p[15] }} {{ p[16] }}</div></div>
+    </div>
+
+    <p class="section-title"><i class="bi bi-speedometer me-2"></i>Data Kilometer</p>
+    <div class="row g-3 mb-4 align-items-end">
+        <div class="col-md-3"><div class="info-label">KM Awal</div><div class="info-value">{{ p[5] }} km</div></div>
+        <div class="col-md-3"><div class="info-label">KM Akhir</div><div class="info-value">{{ p[6] }} km</div></div>
+        <div class="col-md-3"><div class="info-label mb-1">Total Jarak Tempuh</div><div class="km-result">{{ p[7] }} km</div></div>
+    </div>
+
+    <p class="section-title"><i class="bi bi-geo-alt me-2"></i>Rute Perjalanan</p>
+    <div class="row g-3 mb-4">
+        <div class="col-md-4"><div class="info-label">Kebun Asal</div><div class="info-value">{{ p[17] or '-' }}</div></div>
+        <div class="col-md-4"><div class="info-label">Kebun Tujuan</div><div class="info-value">{{ p[18] or '-' }}</div></div>
+        <div class="col-md-4"><div class="info-label">Nama Penumpang</div><div class="info-value">{{ p[11] or '-' }}</div></div>
+        <div class="col-12"><div class="info-label">Keterangan</div><div class="info-value">{{ p[12] or '-' }}</div></div>
+    </div>
+
+    <p class="section-title"><i class="bi bi-camera me-2"></i>Foto Odometer</p>
+    <div class="row g-3">
+        <div class="col-md-4">
+            {% if p[8] %}<img src="{{ url_for('static', filename='uploads/perjalanan/' + p[8]) }}" class="foto-box">{% else %}<div class="no-foto"><i class="bi bi-image"></i></div>{% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
